@@ -10,7 +10,7 @@
     - name: Install nushell
       ansible.builtin.include_tasks: install_nu.yml
 
-    - name: Set nushell as default shell
+    - name: Set nushell as default shell for user
       ansible.builtin.user:
         name: "{{ ansible_user }}"
         shell: /usr/local/bin/nu
@@ -28,3 +28,22 @@
         dest: /home/{{ ansible_user }}/.config/nushell/env.nu
         mode: "0666"
         force: true
+
+    # - name: Set nushell as default shell for root
+    #   ansible.builtin.user:
+    #     name: root
+    #     shell: /usr/local/bin/nu
+    #
+    # - name: Write config.nu for root
+    #   ansible.builtin.template:
+    #     src: templates/config.nu.j2
+    #     dest: /home/root/.config/nushell/config.nu
+    #     mode: "0666"
+    #     force: true
+    #
+    # - name: Write env.nu for root
+    #   ansible.builtin.template:
+    #     src: templates/env.nu.j2
+    #     dest: /home/root/.config/nushell/env.nu
+    #     mode: "0666"
+    #     force: true

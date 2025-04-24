@@ -316,3 +316,5 @@
         path: ~{{ ansible_user }}/.bashrc
         regexp: '\.\s+<\(kubectl completion bash\)'
         line: ". <(kubectl completion bash)  # Added by k3s-ansible"
+# - name: Setup krew
+#   ansible.builtin.include_tasks: setup_krew.yml

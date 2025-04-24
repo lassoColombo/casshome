@@ -1,0 +1,43 @@
+---
+- name: Add Fleet Helm repo
+  ansible.builtin.command: helm repo add fleet https://rancher.github.io/fleet-helm-charts/
+  changed_when: false
+
+- name: Update Helm repos
+  ansible.builtin.command: helm repo update
+  changed_when: false
+
+- name: Create cattle-fleet-system namespace
+  kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    api_version: v1
+    kind: Namespace
+    name: cattle-fleet-system
+    state: present
+
+- name: Install fleet via Helm
+  kubernetes.core.helm:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    name: fleet
+    chart_ref: fleet/fleet
+    release_namespace: cattle-fleet-system
+    create_namespace: false
+
+- name: Install fleet-crd via Helm
+  kubernetes.core.helm:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    name: fleet-crd
+    chart_ref: fleet/fleet-crd
+    release_namespace: cattle-fleet-system
+    create_namespace: false
+    wait: true
+
+- name: Waiting for fleet to set up
+  ansible.builtin.pause:
+    seconds: 10
+
+- name: Apply GitRepo resource
+  kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    state: present
+    definition: "{{ lookup('template', 'templates/gitrepo.yml') }}"

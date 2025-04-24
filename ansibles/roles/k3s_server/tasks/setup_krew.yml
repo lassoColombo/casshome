@@ -1,0 +1,46 @@
+---
+- name: Fetch krew
+  get_url:
+    url: "https://storage.googleapis.com/krew/{{ krew.version }}/krew.tar.gz"
+    dest: /tmp/krew.tar.gz
+    mode: "0600"
+
+- name: Make tempdir
+  file:
+    path: /tmp/krew
+    state: directory
+    mode: "0755"
+
+- name: Unarchive krew
+  unarchive:
+    src: /tmp/krew.tar.gz
+    dest: /tmp/krew
+    remote_src: true
+
+- name: Set fact Amd64 fact on x86_64 platforms
+  set_fact:
+    linux_platform: amd64
+  when: ansible_architecture == "x86_64"
+
+- name: Set fact Arm fact on Arm platforms
+  set_fact:
+    linux_platform: arm
+  when: ansible_architecture == "arm"
+
+- name: Copy krew plugin to /usr/local/bin
+  copy:
+    src: "/tmp/krew/krew-{{ ansible_system | lower }}_{{ linux_platform }} "
+    dest: /usr/local/bin/kubectl-krew
+    mode: "0755"
+    remote_src: true
+
+- name: Run Krew Update # noqa command-instead-of-shell
+  shell: /usr/local/bin/kubectl krew update
+  args:
+    creates: /root/.krew/index/plugins/krew_plugins.yaml
+
+- name: Install Krew plugins
+  ansible.builtin.command: "kubectl krew install {{ item }}"
+  changed_when: true
+  with_items: "{{ krew.plugins }}"
+  when: krew_plugins is defined
