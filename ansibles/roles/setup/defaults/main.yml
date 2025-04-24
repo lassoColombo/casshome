@@ -1,0 +1,24 @@
+---
+apt_packages:
+  - python3-kubernetes
+  - ripgrep
+  - neovim
+  - fish
+  - yq
+  - jq
+
+nushell:
+  version: "0.103.0"
+  bin_directory: "/usr/local/bin"
+  tar_directory: "/tmp/nushell"
+  tar_file: "/tmp/nushell/nushell.tar"
+  binary_mode: "0755"
+  wanted_plugins:
+    - nu_plugin_custom_values
+    - nu_plugin_formats
+    - nu_plugin_query
+  # - nu_plugin_inc
+  # - nu_plugin_example
+  # - nu_plugin_gstat
+  # - nu_plugin_polars
+  # - nu_plugin_stress_internals
