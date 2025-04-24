@@ -1,0 +1,19 @@
+---
+# "nushell" version to install
+nushell_version: "0.103.0"
+# Where to install "nushell" binary
+nushell_bin_directory: "/usr/local/bin"
+nushell_tar_directory: "/tmp/nushell"
+nushell_tar_file: "{{ nushell_tar_directory }}/nushell.tar"
+# Specifies the permissions of the "nushell" binary
+nushell_binary_mode: "0755"
+nushell_wanted_plugins:
+  []
+  # - nu_plugin_custom_values
+  # - nu_plugin_example
+  # - nu_plugin_formats
+  # - nu_plugin_query
+  # - nu_plugin_inc
+  # - nu_plugin_gstat
+  # - nu_plugin_polars
+  # - nu_plugin_stress_internals

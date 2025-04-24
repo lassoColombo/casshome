@@ -1,0 +1,5 @@
+.venv
+ansibles/.vagrant
+ansibles/.ansible/
+ansibles/inventory.yml
+ansibles/playbook/debug.yml
