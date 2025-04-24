@@ -7,4 +7,4 @@ spec:
   repo: https://github.com/lassoColombo/casshome
   branch: main
   paths:
-    - manifests/nginx
+    - manifests/*

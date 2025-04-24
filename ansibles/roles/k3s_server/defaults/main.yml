@@ -10,7 +10,6 @@ agent_group: agent # noqa var-naming[no-role-prefix]
 use_external_database: false # noqa var-naming[no-role-prefix]
 extra_server_args: "" # noqa var-naming[no-role-prefix]
 krew:
-  version: "v0.2.1"
   plugins:
     - ns
     - ctx

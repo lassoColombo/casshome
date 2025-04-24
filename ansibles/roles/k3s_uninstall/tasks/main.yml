@@ -32,5 +32,5 @@
   when: "'server' in group_names"
   ansible.builtin.lineinfile:
     path: "~{{ ansible_user }}/.bashrc"
-    search_string: "Added by k3s-ansible"
+    search_string: "automatically added by ansible"
     state: absent

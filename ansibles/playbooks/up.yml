@@ -13,11 +13,11 @@
 #   roles:
 #     - role: k3s_prereq
 #
-# - name: Setup K3S server
-#   hosts: server
-#   become: true
-#   roles:
-#     - role: k3s_server
+- name: Setup K3S server
+  hosts: server
+  become: true
+  roles:
+    - role: k3s_server
 #
 # - name: Setup K3S agent
 #   hosts: agent

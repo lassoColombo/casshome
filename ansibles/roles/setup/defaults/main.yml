@@ -4,6 +4,7 @@ apt_packages:
   - ripgrep
   - neovim
   - fish
+  - fzf
   - yq
   - jq
 

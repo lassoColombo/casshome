@@ -39,7 +39,7 @@
   ansible.builtin.lineinfile:
     path: "~{{ ansible_user }}/.bashrc"
     regexp: '\.\s+<\(k3s completion bash\)'
-    line: ". <(k3s completion bash)  # Added by k3s-ansible"
+    line: ". <(k3s completion bash)  # automatically added by ansible"
 
 - name: Setup optional config file
   when: server_config_yaml is defined
@@ -275,7 +275,7 @@
       changed_when: false
 
 - name: Install helm if not exists
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://get.helm.sh/helm-v3.11.0-linux-amd64.tar.gz
     dest: /usr/local/bin
     extra_opts: "--strip-components=1"
@@ -308,13 +308,41 @@
       ansible.builtin.lineinfile:
         path: ~{{ ansible_user }}/.bashrc
         regexp: "export KUBECONFIG=~/.kube/config"
-        line: "export KUBECONFIG=~/.kube/config # Added by k3s-ansible"
+        line: "export KUBECONFIG=~/.kube/config # automatically added by ansible"
         state: present
 
     - name: Configure kubectl autocomplete
       ansible.builtin.lineinfile:
         path: ~{{ ansible_user }}/.bashrc
         regexp: '\.\s+<\(kubectl completion bash\)'
-        line: ". <(kubectl completion bash)  # Added by k3s-ansible"
-# - name: Setup krew
-#   ansible.builtin.include_tasks: setup_krew.yml
+        line: ". <(kubectl completion bash)  # automatically added by ansible"
+
+- name: Setup krew
+  block:
+    - name: Unarchive installation script
+      ansible.builtin.unarchive:
+        src: https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz
+        dest: /tmp/
+        extra_opts: "--strip-components=1"
+        owner: root
+        group: root
+        mode: "0755"
+        remote_src: true
+      args:
+        creates: /usr/local/bin/kubectl-krew
+
+    - name: Add krew to the path
+      ansible.builtin.lineinfile:
+        path: /home/{{ ansible_user }}/.bashrc
+        regexp: 'export PATH="${HOME}/.krew/bin:$PATH'
+        line: 'export PATH="${HOME}/.krew/bin:$PATH" # automatically added by ansible'
+
+    - name: Run installation script
+      changed_when: false
+      ansible.builtin.command: /tmp/krew-linux_amd64 install krew
+
+    - name: Install krew plugins
+      changed_when: true
+      with_items: "{{ krew.plugins }}"
+      become: false # setup for user, not for root
+      ansible.builtin.shell: export PATH="/home/{{ ansible_user }}/.krew/bin:$PATH"; kubectl krew install {{ item }}
