@@ -1,0 +1,44 @@
+replicas: 1
+
+persistence:
+  enabled: false # :WARN: changeme
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: "your-storage-class" # change this to match your setup
+
+adminUser: admin
+adminPassword: changeme # ideally store this in a Kubernetes secret
+
+# service:
+#   type: ClusterIP
+#   port: 80
+#   targetPort: 3000
+
+# ingress:
+#   enabled: true
+#   ingressClassName: "nginx"
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+#   hosts:
+#     - grafana.local # add this to your /etc/hosts pointing to the cluster IP
+#   path: /
+#   pathType: Prefix
+#   tls: [] # or configure TLS if you like
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "250m"
+# sidecar:
+#   dashboards:
+#     enabled: true
+#     label: grafana_dashboard
+#     searchNamespace: ALL
+#   datasources:
+#     enabled: true
+#     label: grafana_datasource
+#     searchNamespace: ALL
