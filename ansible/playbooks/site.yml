@@ -1,0 +1,8 @@
+---
+- name: Configure k8s node
+  hosts: k8s
+  become: true
+
+  roles:
+    - common
+    - k8s

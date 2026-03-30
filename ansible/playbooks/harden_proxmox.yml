@@ -1,0 +1,29 @@
+---
+# Hardens SSH on the Proxmox node.
+# Pre-requisite: run `ssh-copy-id root@192.168.1.10` first to install your SSH key.
+- name: Harden SSH on Proxmox node
+  hosts: proxmox
+  gather_facts: false
+
+  tasks:
+    - name: Ensure SSH authorized key is present for root
+      ansible.posix.authorized_key:
+        user: root
+        key: "{{ lookup('file', '~/.ssh/casshome.pub') }}"
+        state: present
+
+    - name: Drop hardened sshd config
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/99-hardened.conf
+        content: |
+          PasswordAuthentication no
+          PermitRootLogin prohibit-password
+          PubkeyAuthentication yes
+        mode: "0600"
+      notify: Restart sshd
+
+  handlers:
+    - name: Restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

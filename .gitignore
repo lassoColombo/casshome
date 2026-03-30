@@ -1,5 +1,19 @@
-.venv
-ansibles/.vagrant
-ansibles/.ansible/
-ansibles/inventory.yml
-ansibles/playbook/debug.yml
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfvars
+terraform/.terraform.lock.hcl
+
+# Ansible
+ansible/*.retry
+ansible/vault_pass
+ansible/.vault_pass
+
+# Secrets
+.env
+*.pem
+*.key
+
+# Editor
+.DS_Store
