@@ -3,6 +3,7 @@ terraform/.terraform/
 terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/*.tfvars
+!terraform/terraform.tfvars
 terraform/.terraform.lock.hcl
 
 # Ansible
@@ -11,7 +12,8 @@ ansible/vault_pass
 ansible/.vault_pass
 
 # Secrets
-.env
+!.env.example.nu
+.env*.nu
 *.pem
 *.key
 

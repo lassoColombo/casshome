@@ -11,10 +11,13 @@
       - curl
       - git
       - vim
+      - yq
+      - jq
       - apt-transport-https
       - ca-certificates
       - gnupg
       - qemu-guest-agent
+      - tree
     state: present
 
 - name: Enable and start qemu-guest-agent

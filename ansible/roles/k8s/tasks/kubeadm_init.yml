@@ -1,0 +1,52 @@
+---
+- name: Check if Kubernetes is already initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_init_done
+
+- name: Initialize Kubernetes control plane
+  when: not kubeadm_init_done.stat.exists
+  block:
+    - name: Upload kubeadm config
+      ansible.builtin.template:
+        src: kubeadm-config.j2
+        dest: /tmp/kubeadm-config.yaml
+        mode: "0600"
+
+    - name: Run kubeadm init
+      ansible.builtin.command: kubeadm init --config /tmp/kubeadm-config.yaml
+      register: kubeadm_init_result
+
+  always:
+    - name: Remove kubeadm config file
+      ansible.builtin.file:
+        path: /tmp/kubeadm-config.yaml
+        state: absent
+
+# Run on every playbook pass so the kubeconfig is always present and current
+- name: Create .kube directory for {{ k8s_admin_user }}
+  ansible.builtin.file:
+    path: /home/{{ k8s_admin_user }}/.kube
+    state: directory
+    owner: "{{ k8s_admin_user }}"
+    group: "{{ k8s_admin_user }}"
+    mode: "0700"
+
+- name: Copy admin.conf to {{ k8s_admin_user }}'s kubeconfig
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/{{ k8s_admin_user }}/.kube/config
+    owner: "{{ k8s_admin_user }}"
+    group: "{{ k8s_admin_user }}"
+    mode: "0600"
+    remote_src: true
+
+# Allow workloads on the single control-plane node
+- name: Remove control-plane taint
+  ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  when: not kubeadm_init_done.stat.exists
+  # Node may already be untainted on re-runs; ignore "not found" exit code
+  failed_when: false
+  changed_when: true

@@ -1,0 +1,21 @@
+---
+- name: Enable kubectl bash completion
+  ansible.builtin.lineinfile:
+    path: /home/{{ k8s_admin_user }}/.bashrc
+    line: "source <(kubectl completion bash)"
+    regexp: "kubectl completion bash"
+    create: false
+
+- name: Add k alias for kubectl
+  ansible.builtin.lineinfile:
+    path: /home/{{ k8s_admin_user }}/.bashrc
+    line: "alias k=kubectl"
+    regexp: "^alias k=kubectl"
+    create: false
+
+- name: Enable completion for k alias
+  ansible.builtin.lineinfile:
+    path: /home/{{ k8s_admin_user }}/.bashrc
+    line: "complete -o default -F __start_kubectl k"
+    regexp: "complete -o default -F __start_kubectl k"
+    create: false

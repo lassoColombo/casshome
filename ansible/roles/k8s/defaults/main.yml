@@ -1,4 +1,14 @@
 ---
-k8s_version: "1.32"
+k8s_version: "1.32"          # minor version — used for apt repo path
 k8s_pod_cidr: "10.244.0.0/16"
-k8s_node_ip: "192.168.1.20"
+k8s_service_cidr: "10.96.0.0/12"
+k8s_admin_user: "ubuntu"
+
+# CNI — Calico (via Tigera operator Helm chart)
+k8s_calico_chart_version: "v3.29.0"
+
+# Flannel version kept for removal task during migration
+k8s_flannel_version: "v0.26.2"
+
+# Ingress — NGINX Helm chart (chart 4.x = controller v1.x)
+k8s_ingress_nginx_chart_version: "4.12.0"

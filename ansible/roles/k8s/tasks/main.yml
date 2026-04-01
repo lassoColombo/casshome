@@ -1,157 +1,33 @@
 ---
-# --- Kernel modules ---
-- name: Load required kernel modules
-  community.general.modprobe:
-    name: "{{ item }}"
-    persistent: present
-    state: present
-  loop:
-    - overlay
-    - br_netfilter
+- name: System prerequisites
+  ansible.builtin.include_tasks: prereqs.yml
+  tags: prereqs
 
-# --- Sysctl ---
-- name: Set sysctl parameters for k8s networking
-  ansible.posix.sysctl:
-    name: "{{ item.key }}"
-    value: "{{ item.value }}"
-    sysctl_file: /etc/sysctl.d/99-k8s.conf
-    reload: true
-  loop:
-    - { key: "net.bridge.bridge-nf-call-iptables",  value: "1" }
-    - { key: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
-    - { key: "net.ipv4.ip_forward",                 value: "1" }
+- name: Set up containerd runtime
+  ansible.builtin.include_tasks: containerd.yml
+  tags: containerd
 
-# --- containerd ---
-- name: Install containerd
-  ansible.builtin.apt:
-    name: containerd
-    state: present
+- name: Install Kubernetes packages
+  ansible.builtin.include_tasks: k8s_packages.yml
+  tags: k8s_packages
 
-- name: Create containerd config directory
-  ansible.builtin.file:
-    path: /etc/containerd
-    state: directory
-    mode: "0755"
+- name: Initialize Kubernetes cluster
+  ansible.builtin.include_tasks: kubeadm_init.yml
+  tags: kubeadm
 
-- name: Generate default containerd config
-  ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
-  args:
-    creates: /etc/containerd/config.toml
+- name: Install Helm
+  ansible.builtin.include_tasks: helm.yml
+  tags: helm
 
-- name: Enable SystemdCgroup in containerd config
-  ansible.builtin.replace:
-    path: /etc/containerd/config.toml
-    regexp: 'SystemdCgroup = false'
-    replace: 'SystemdCgroup = true'
-  notify: Restart containerd
+- name: Install Calico CNI
+  ansible.builtin.include_tasks: cni.yml
+  tags: cni
 
-- name: Enable and start containerd
-  ansible.builtin.service:
-    name: containerd
-    enabled: true
-    state: started
+- name: Install NGINX Ingress Controller
+  ansible.builtin.include_tasks: ingress.yml
+  tags: ingress
 
-# --- Kubernetes apt repo ---
-- name: Create keyrings directory
-  ansible.builtin.file:
-    path: /etc/apt/keyrings
-    state: directory
-    mode: "0755"
+- name: Configure kubectl (alias + autocompletion)
+  ansible.builtin.include_tasks: kubectl_config.yml
+  tags: kubectl_config
 
-- name: Add Kubernetes apt signing key
-  ansible.builtin.shell: |
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key \
-      | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-  args:
-    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-
-- name: Add Kubernetes apt repository
-  ansible.builtin.copy:
-    dest: /etc/apt/sources.list.d/kubernetes.list
-    content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /\n"
-    mode: "0644"
-
-- name: Install kubelet, kubeadm, kubectl
-  ansible.builtin.apt:
-    name:
-      - "kubelet"
-      - "kubeadm"
-      - "kubectl"
-    state: present
-    update_cache: true
-
-- name: Hold kubelet, kubeadm, kubectl at current version
-  ansible.builtin.dpkg_selections:
-    name: "{{ item }}"
-    selection: hold
-  loop:
-    - kubelet
-    - kubeadm
-    - kubectl
-
-- name: Enable and start kubelet
-  ansible.builtin.service:
-    name: kubelet
-    enabled: true
-    state: started
-
-# --- kubeadm init ---
-- name: Check if k8s is already initialized
-  ansible.builtin.stat:
-    path: /etc/kubernetes/admin.conf
-  register: kubeadm_init_done
-
-- name: Initialize k8s control plane
-  ansible.builtin.command: >
-    kubeadm init
-    --pod-network-cidr={{ k8s_pod_cidr }}
-    --apiserver-advertise-address={{ k8s_node_ip }}
-  when: not kubeadm_init_done.stat.exists
-  register: kubeadm_init_result
-
-# --- kubeconfig for ubuntu user ---
-- name: Create .kube directory for ubuntu user
-  ansible.builtin.file:
-    path: /home/ubuntu/.kube
-    state: directory
-    owner: ubuntu
-    group: ubuntu
-    mode: "0700"
-
-- name: Copy admin.conf to ubuntu's kubeconfig
-  ansible.builtin.copy:
-    src: /etc/kubernetes/admin.conf
-    dest: /home/ubuntu/.kube/config
-    owner: ubuntu
-    group: ubuntu
-    mode: "0600"
-    remote_src: true
-
-# --- Flannel CNI ---
-- name: Install Flannel CNI
-  ansible.builtin.command: >
-    kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  when: not kubeadm_init_done.stat.exists
-
-- name: Remove control-plane taint (allow scheduling on single node)
-  ansible.builtin.command: >
-    kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  when: not kubeadm_init_done.stat.exists
-  failed_when: false
-
-# --- Fetch kubeconfig locally ---
-- name: Fetch kubeconfig to local machine
-  ansible.builtin.fetch:
-    src: /home/ubuntu/.kube/config
-    dest: "{{ lookup('env', 'HOME') }}/.kube/casshome-k8s.yaml"
-    flat: true
-
-handlers:
-  - name: Restart containerd
-    ansible.builtin.service:
-      name: containerd
-      state: restarted

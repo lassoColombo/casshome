@@ -22,6 +22,56 @@
         mode: "0600"
       notify: Restart sshd
 
+    # The Intel I218-LM onboard NIC (e1000e driver) deadlocks its TX buffer under
+    # tunneled traffic (Calico IPIP + WireGuard UDP). Disabling TSO/GSO/GRO on the
+    # physical NIC and the bridge prevents the hang.
+    # TODO: remove these three tasks when switching CNI away from Calico.
+
+    - name: Drop e1000e modprobe config (Calico workaround)
+      ansible.builtin.copy:
+        dest: /etc/modprobe.d/e1000e.conf
+        content: |
+          # e1000e I218-LM NIC hang workaround - Calico IPIP + WireGuard tunnel traffic
+          # causes TX buffer deadlock. Remove this file when switching CNI away from Calico.
+          options e1000e InterruptThrottleRate=0
+        mode: "0644"
+
+    - name: Patch /etc/network/interfaces to disable TSO/GSO/GRO on boot (Calico workaround)
+      ansible.builtin.copy:
+        dest: /etc/network/interfaces
+        mode: "0644"
+        content: |
+          auto lo
+          iface lo inet loopback
+
+          iface nic0 inet manual
+              # e1000e I218-LM NIC hang workaround - Calico IPIP + WireGuard tunnel traffic
+              # causes TX buffer deadlock. Remove post-up line when switching CNI away from Calico.
+              post-up ethtool -K nic0 tso off gso off gro off
+
+          auto vmbr0
+          iface vmbr0 inet static
+              address 192.168.1.10/24
+              gateway 192.168.1.1
+              bridge-ports nic0
+              bridge-stp off
+              bridge-fd 0
+              # e1000e I218-LM NIC hang workaround - Calico IPIP + WireGuard tunnel traffic
+              # causes TX buffer deadlock. Remove post-up line when switching CNI away from Calico.
+              post-up ethtool -K vmbr0 tso off gso off gro off
+
+          source /etc/network/interfaces.d/*
+
+    - name: Apply TSO/GSO/GRO disabling immediately on nic0 (Calico workaround)
+      ansible.builtin.command:
+        cmd: ethtool -K nic0 tso off gso off gro off
+      changed_when: true
+
+    - name: Apply TSO/GSO/GRO disabling immediately on vmbr0 (Calico workaround)
+      ansible.builtin.command:
+        cmd: ethtool -K vmbr0 tso off gso off gro off
+      changed_when: true
+
   handlers:
     - name: Restart sshd
       ansible.builtin.service:

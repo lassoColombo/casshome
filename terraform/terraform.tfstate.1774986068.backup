@@ -1,0 +1,241 @@
+{
+  "version": 4,
+  "terraform_version": "1.5.7",
+  "serial": 12,
+  "lineage": "f32396c4-e8e8-29f4-47f5-66d9248c8193",
+  "outputs": {
+    "ssh_command": {
+      "value": "ssh ubuntu@192.168.1.20",
+      "type": "string"
+    },
+    "vm_id": {
+      "value": 100,
+      "type": "number"
+    },
+    "vm_ip": {
+      "value": "192.168.1.20",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "proxmox_virtual_environment_download_file",
+      "name": "ubuntu_cloud_image",
+      "provider": "provider[\"registry.terraform.io/bpg/proxmox\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "checksum": null,
+            "checksum_algorithm": null,
+            "content_type": "iso",
+            "datastore_id": "local",
+            "decompression_algorithm": null,
+            "file_name": "noble-server-cloudimg-amd64.img",
+            "id": "local:iso/noble-server-cloudimg-amd64.img",
+            "node_name": "pve1",
+            "overwrite": true,
+            "overwrite_unmanaged": false,
+            "size": 629987328,
+            "upload_timeout": 600,
+            "url": "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img",
+            "verify": true
+          },
+          "sensitive_attributes": [],
+          "private": "eyJvcmlnaW5hbF9zdGF0ZV9zaXplIjoiTmpJNU9UZzNNekk0IiwidXJsX3NpemUiOiJOakk1T1RnM016STQifQ=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "proxmox_virtual_environment_vm",
+      "name": "k8s_node",
+      "provider": "provider[\"registry.terraform.io/bpg/proxmox\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "acpi": true,
+            "agent": [
+              {
+                "enabled": true,
+                "timeout": "15m",
+                "trim": false,
+                "type": "virtio",
+                "wait_for_ip": []
+              }
+            ],
+            "amd_sev": [],
+            "audio_device": [],
+            "bios": "seabios",
+            "boot_order": [
+              "virtio0",
+              "net0"
+            ],
+            "cdrom": [],
+            "clone": [],
+            "cpu": [
+              {
+                "affinity": "",
+                "architecture": "",
+                "cores": 4,
+                "flags": null,
+                "hotplugged": 0,
+                "limit": 0,
+                "numa": false,
+                "sockets": 1,
+                "type": "x86-64-v2-AES",
+                "units": 0
+              }
+            ],
+            "delete_unreferenced_disks_on_destroy": true,
+            "description": "",
+            "disk": [
+              {
+                "aio": "io_uring",
+                "backup": true,
+                "cache": "none",
+                "datastore_id": "local-lvm",
+                "discard": "on",
+                "file_format": "raw",
+                "file_id": "local:iso/noble-server-cloudimg-amd64.img",
+                "import_from": "",
+                "interface": "virtio0",
+                "iothread": true,
+                "path_in_datastore": "vm-100-disk-0",
+                "replicate": true,
+                "serial": "",
+                "size": 100,
+                "speed": [],
+                "ssd": false
+              }
+            ],
+            "efi_disk": [],
+            "hook_script_file_id": null,
+            "hostpci": [],
+            "hotplug": null,
+            "id": "100",
+            "initialization": [
+              {
+                "datastore_id": "local-lvm",
+                "dns": [
+                  {
+                    "domain": "",
+                    "servers": [
+                      "1.1.1.1",
+                      "8.8.8.8"
+                    ]
+                  }
+                ],
+                "file_format": "",
+                "interface": "ide2",
+                "ip_config": [
+                  {
+                    "ipv4": [
+                      {
+                        "address": "192.168.1.20/24",
+                        "gateway": "192.168.1.1"
+                      }
+                    ],
+                    "ipv6": []
+                  }
+                ],
+                "meta_data_file_id": "",
+                "network_data_file_id": "",
+                "type": "",
+                "user_account": [
+                  {
+                    "keys": [
+                      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICYr9CmJ7eiOPEsORlFIUL9ATlykLWi47eOV1QVUe4ma lasso.colombo@gmail.com"
+                    ],
+                    "password": "",
+                    "username": "ubuntu"
+                  }
+                ],
+                "user_data_file_id": "",
+                "vendor_data_file_id": ""
+              }
+            ],
+            "ipv4_addresses": [],
+            "ipv6_addresses": [],
+            "keyboard_layout": "en-us",
+            "kvm_arguments": "",
+            "mac_addresses": [],
+            "machine": "",
+            "memory": [
+              {
+                "dedicated": 8192,
+                "floating": 0,
+                "hugepages": "",
+                "keep_hugepages": false,
+                "shared": 0
+              }
+            ],
+            "migrate": false,
+            "name": "k8s-node-01",
+            "network_device": [
+              {
+                "bridge": "vmbr0",
+                "disconnected": false,
+                "enabled": true,
+                "firewall": false,
+                "mac_address": "BC:24:11:E9:4F:65",
+                "model": "virtio",
+                "mtu": 0,
+                "queues": 0,
+                "rate_limit": 0,
+                "trunks": "",
+                "vlan_id": 0
+              }
+            ],
+            "network_interface_names": [],
+            "node_name": "pve1",
+            "numa": [],
+            "on_boot": true,
+            "operating_system": [
+              {
+                "type": "l26"
+              }
+            ],
+            "pool_id": "",
+            "protection": false,
+            "purge_on_destroy": true,
+            "reboot": false,
+            "reboot_after_update": true,
+            "rng": [],
+            "scsi_hardware": "virtio-scsi-pci",
+            "serial_device": [],
+            "smbios": [],
+            "started": true,
+            "startup": [],
+            "stop_on_destroy": false,
+            "tablet_device": true,
+            "tags": null,
+            "template": false,
+            "timeout_clone": 1800,
+            "timeout_create": 1800,
+            "timeout_migrate": 1800,
+            "timeout_move_disk": 1800,
+            "timeout_reboot": 1800,
+            "timeout_shutdown_vm": 1800,
+            "timeout_start_vm": 1800,
+            "timeout_stop_vm": 300,
+            "tpm_state": [],
+            "usb": [],
+            "vga": [],
+            "virtiofs": [],
+            "vm_id": 100,
+            "watchdog": []
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "proxmox_virtual_environment_download_file.ubuntu_cloud_image"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

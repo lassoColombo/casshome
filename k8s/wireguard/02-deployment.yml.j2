@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wireguard
+  namespace: wireguard
+  labels:
+    app: wireguard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wireguard
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: wireguard
+    spec:
+      hostNetwork: true
+      containers:
+        - name: wireguard
+          image: lscr.io/linuxserver/wireguard:latest
+          ports:
+            - containerPort: 51820
+              protocol: UDP
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "{{ timezone }}"
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_MODULE
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: "500m"
+              memory: 128Mi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: wg-config
+              mountPath: /config/wg_confs/wg0.conf
+              subPath: wg0.conf
+              readOnly: true
+            - name: modules
+              mountPath: /lib/modules
+              readOnly: true
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: wireguard-config-pvc
+        - name: wg-config
+          secret:
+            secretName: wireguard-config
+        - name: modules
+          hostPath:
+            path: /lib/modules

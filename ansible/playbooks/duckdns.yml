@@ -1,0 +1,16 @@
+---
+# Configure DuckDNS dynamic DNS on the gateway node.
+#
+# Usage:
+#   ansible-playbook playbooks/duckdns.yml -i inventory/hosts.yml
+#
+# Prerequisites:
+#   - duckdns_domain and duckdns_token set in inventory/group_vars/all.yml
+#   - The gateway group in hosts.yml points to the node with the public IP
+
+- name: DuckDNS dynamic DNS
+  hosts: gateway
+  become: true
+
+  roles:
+    - duckdns

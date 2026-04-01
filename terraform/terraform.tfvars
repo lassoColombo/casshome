@@ -1,5 +1,4 @@
 proxmox_endpoint  = "https://192.168.1.10:8006"
-proxmox_api_token = "terraform@pve!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 vm_ip             = "192.168.1.20"
 gateway           = "192.168.1.1"
 ssh_public_key    = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICYr9CmJ7eiOPEsORlFIUL9ATlykLWi47eOV1QVUe4ma lasso.colombo@gmail.com"

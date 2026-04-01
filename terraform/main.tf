@@ -27,17 +27,19 @@ resource "proxmox_virtual_environment_vm" "k8s_node" {
   vm_id     = 100
 
   cpu {
-    cores = 4
+    cores = 5
     type  = "x86-64-v2-AES"
   }
 
-  memory {
-    dedicated = 8192
+  memory { # Mib
+    dedicated = 12288
+    floating  = 2048 # enables ballooning; host can reclaim down to this minimum
   }
 
   disk {
     datastore_id = "local-lvm"
     file_id      = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+    file_format  = "raw"
     interface    = "virtio0"
     size         = 100
     discard      = "on"
@@ -73,7 +75,7 @@ resource "proxmox_virtual_environment_vm" "k8s_node" {
   }
 
   agent {
-    enabled = true
+    enabled = true # re-enable after Ansible installs qemu-guest-agent
   }
 
   on_boot = true

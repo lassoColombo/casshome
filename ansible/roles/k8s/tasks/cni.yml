@@ -1,0 +1,48 @@
+---
+- name: Add Calico (Tigera) Helm repo
+  ansible.builtin.command: helm repo add projectcalico https://docs.tigera.io/calico/charts
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+
+- name: Update Helm repos
+  ansible.builtin.command: helm repo update
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+
+- name: Install Calico via Tigera operator Helm chart
+  ansible.builtin.command: >
+    helm upgrade --install calico projectcalico/tigera-operator
+    --namespace tigera-operator
+    --create-namespace
+    --version {{ k8s_calico_chart_version }}
+    --set installation.calicoNetwork.ipPools[0].cidr={{ k8s_pod_cidr }}
+    --set installation.calicoNetwork.ipPools[0].encapsulation=IPIP
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+
+- name: Wait for Calico node to be ready
+  ansible.builtin.command: >
+    kubectl -n calico-system wait daemonset/calico-node
+    --for=jsonpath='{.status.numberReady}'=1 --timeout=300s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+  register: calico_ready
+  retries: 10
+  delay: 15
+  until: calico_ready.rc == 0
+
+- name: Wait for node to be Ready
+  ansible.builtin.command: >
+    kubectl wait node --all
+    --for=condition=Ready --timeout=300s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+  register: node_ready
+  retries: 5
+  delay: 15
+  until: node_ready.rc == 0

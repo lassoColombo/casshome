@@ -1,0 +1,67 @@
+# Docs: https://jellyfin.org/docs/general/installation/advanced/kubernetes/
+# hostPath PVs for single-node cluster.
+# Adjust paths and sizes to match your node's filesystem.
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-config-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /opt/jellyfin/config   # created automatically by kubelet
+    type: DirectoryOrCreate
+  claimRef:
+    namespace: media
+    name: jellyfin-config-pvc
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-media-pv
+spec:
+  capacity:
+    storage: 500Gi               # adjust to match available space
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /mnt/media             # change to your media directory on the node
+    type: DirectoryOrCreate
+  claimRef:
+    namespace: media
+    name: jellyfin-media-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-config-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: ""
+  volumeName: jellyfin-config-pv
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-media-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: ""
+  volumeName: jellyfin-media-pv

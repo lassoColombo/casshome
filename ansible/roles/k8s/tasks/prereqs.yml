@@ -1,0 +1,31 @@
+---
+# Kernel modules needed by containerd and k8s networking
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    persistent: present
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+
+# Network sysctls — must be set after br_netfilter is loaded
+- name: Set sysctl parameters for k8s networking
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-k8s.conf
+    reload: true
+  loop:
+    - { key: "net.bridge.bridge-nf-call-iptables", value: "1" }
+    - { key: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
+    - { key: "net.ipv4.ip_forward", value: "1" }
+
+# Required by kubelet / kubectl port-forward
+- name: Install k8s system dependencies
+  ansible.builtin.apt:
+    name:
+      - socat
+      - conntrack
+      - ebtables
+    state: present

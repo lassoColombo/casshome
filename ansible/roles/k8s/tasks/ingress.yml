@@ -1,0 +1,36 @@
+---
+- name: Add ingress-nginx Helm repo
+  ansible.builtin.command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+
+- name: Update Helm repos
+  ansible.builtin.command: helm repo update
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+
+- name: Install ingress-nginx via Helm
+  ansible.builtin.command: >
+    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
+    --namespace ingress-nginx
+    --create-namespace
+    --version {{ k8s_ingress_nginx_chart_version }}
+    --set controller.service.type=NodePort
+    --set controller.service.nodePorts.http={{ k8s_ingress_http_nodeport }}
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+
+- name: Wait for ingress-nginx controller to be available
+  ansible.builtin.command: >
+    kubectl -n ingress-nginx wait deployment ingress-nginx-controller
+    --for=condition=Available --timeout=300s
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+  changed_when: false
+  register: ingress_ready
+  retries: 5
+  delay: 15
+  until: ingress_ready.rc == 0

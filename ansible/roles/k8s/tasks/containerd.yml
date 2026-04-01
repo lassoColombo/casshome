@@ -1,0 +1,42 @@
+---
+- name: Install containerd
+  ansible.builtin.apt:
+    name: containerd
+    state: present
+
+- name: Create containerd config directory
+  ansible.builtin.file:
+    path: /etc/containerd
+    state: directory
+    mode: "0755"
+
+- name: Check if containerd config exists
+  ansible.builtin.stat:
+    path: /etc/containerd/config.toml
+  register: containerd_config_stat
+
+# Generate a fresh default config on first run; skip if already present
+# (the replace task below handles idempotent day-2 corrections)
+- name: Generate default containerd config
+  ansible.builtin.shell:
+    cmd: containerd config default > /etc/containerd/config.toml
+  when: not containerd_config_stat.stat.exists
+  notify: Restart containerd
+
+# Idempotent: only fires the handler when the line actually changes
+- name: Enable SystemdCgroup in containerd config
+  ansible.builtin.replace:
+    path: /etc/containerd/config.toml
+    regexp: '(\s+)SystemdCgroup = false'
+    replace: '\1SystemdCgroup = true'
+  notify: Restart containerd
+
+# Flush now so containerd is fully restarted before kubelet starts
+- name: Flush handlers to apply containerd config changes
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start containerd
+  ansible.builtin.service:
+    name: containerd
+    enabled: true
+    state: started

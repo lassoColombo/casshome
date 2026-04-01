@@ -1,0 +1,32 @@
+---
+- name: Create DuckDNS directory
+  ansible.builtin.file:
+    path: "{{ duckdns_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy DuckDNS update script
+  ansible.builtin.template:
+    src: duck.sh.j2
+    dest: "{{ duckdns_dir }}/duck.sh"
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Configure DuckDNS cron job
+  ansible.builtin.cron:
+    name: duckdns_update
+    minute: "*/5"
+    hour: "*"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "{{ duckdns_dir }}/duck.sh >/dev/null 2>&1"
+    user: root
+    state: present
+
+- name: Run DuckDNS update immediately
+  ansible.builtin.command: "{{ duckdns_dir }}/duck.sh"
+  changed_when: false
