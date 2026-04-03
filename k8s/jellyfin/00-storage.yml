@@ -14,11 +14,8 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   hostPath:
-    path: /opt/jellyfin/config   # created automatically by kubelet
+    path: /opt/jellyfin/config # created automatically by kubelet
     type: DirectoryOrCreate
-  claimRef:
-    namespace: media
-    name: jellyfin-config-pvc
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -26,17 +23,14 @@ metadata:
   name: jellyfin-media-pv
 spec:
   capacity:
-    storage: 500Gi               # adjust to match available space
+    storage: 500Gi # adjust to match available space
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   hostPath:
-    path: /mnt/media             # change to your media directory on the node
+    path: /mnt/media # change to your media directory on the node
     type: DirectoryOrCreate
-  claimRef:
-    namespace: media
-    name: jellyfin-media-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

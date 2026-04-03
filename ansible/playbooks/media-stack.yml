@@ -8,11 +8,6 @@
 #
 # Usage:
 #   ansible-playbook playbooks/media-stack.yml -i inventory/hosts.yml
-#
-# Prerequisites:
-#   - k8s cluster is up (run site.yml first)
-#   - kubernetes.core collection: ansible-galaxy collection install kubernetes.core
-#   - kubeconfig at ~/.kube/casshome.conf
 
 - name: Media stack host prerequisites
   hosts: k8s
@@ -66,7 +61,7 @@
 
     - name: Jellyfin storage (PVs and PVCs)
       kubernetes.core.k8s:
-        definition: "{{ lookup('file', jellyfin_dir + '/01-storage.yml') | from_yaml_all | list }}"
+        definition: "{{ lookup('file', jellyfin_dir + '/00-storage.yml') | from_yaml_all | list }}"
         state: present
 
     # ── Config ────────────────────────────────────────────────────────────────
@@ -76,9 +71,19 @@
         src: "{{ media_dir }}/06-qbittorrent-config.yml"
         state: present
 
+    - name: Lidarr config
+      kubernetes.core.k8s:
+        src: "{{ media_dir }}/08-lidarr-config.yml.j2"
+        state: present
+
+    - name: Prowlarr config
+      kubernetes.core.k8s:
+        src: "{{ media_dir }}/07-prowlarr-config.yml.j2"
+        state: present
+
     - name: Jellyfin network config
       kubernetes.core.k8s:
-        src: "{{ jellyfin_dir }}/05-networkconfig.yml"
+        src: "{{ jellyfin_dir }}/04-networkconfig.yml"
         state: present
 
     # ── Deployments ───────────────────────────────────────────────────────────
@@ -115,7 +120,7 @@
 
     - name: Jellyfin deployment
       kubernetes.core.k8s:
-        definition: "{{ lookup('template', jellyfin_dir + '/02-deployment.yml.j2') | from_yaml }}"
+        definition: "{{ lookup('template', jellyfin_dir + '/01-deployment.yml.j2') | from_yaml }}"
         state: present
         wait: true
         wait_condition:
@@ -132,10 +137,10 @@
 
     - name: Jellyfin service
       kubernetes.core.k8s:
-        src: "{{ jellyfin_dir }}/03-service.yml"
+        src: "{{ jellyfin_dir }}/02-service.yml"
         state: present
 
     - name: Jellyfin ingress
       kubernetes.core.k8s:
-        src: "{{ jellyfin_dir }}/04-ingress.yml"
+        src: "{{ jellyfin_dir }}/03-ingress.yml"
         state: present

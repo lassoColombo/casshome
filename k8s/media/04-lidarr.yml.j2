@@ -17,6 +17,20 @@ spec:
       labels:
         app: lidarr
     spec:
+      initContainers:
+        - name: init-config
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              cp /tmp/lidarr-config/config.xml /config/config.xml
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: lidarr-config
+              mountPath: /tmp/lidarr-config
+              readOnly: true
       containers:
         - name: lidarr
           image: lscr.io/linuxserver/lidarr:latest
@@ -60,6 +74,9 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: lidarr-config-pvc
+        - name: lidarr-config
+          configMap:
+            name: lidarr-config
         - name: downloads
           persistentVolumeClaim:
             claimName: media-downloads-pvc

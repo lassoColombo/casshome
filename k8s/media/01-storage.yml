@@ -17,9 +17,6 @@ spec:
   hostPath:
     path: /mnt/downloads
     type: DirectoryOrCreate
-  claimRef:
-    namespace: media
-    name: media-downloads-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -50,9 +47,6 @@ spec:
   hostPath:
     path: /mnt/media/music
     type: DirectoryOrCreate
-  claimRef:
-    namespace: media
-    name: media-music-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -83,9 +77,6 @@ spec:
   hostPath:
     path: /opt/qbittorrent/config
     type: DirectoryOrCreate
-  claimRef:
-    namespace: media
-    name: qbittorrent-config-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -115,9 +106,6 @@ spec:
   hostPath:
     path: /opt/prowlarr/config
     type: DirectoryOrCreate
-  claimRef:
-    namespace: media
-    name: prowlarr-config-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -147,9 +135,6 @@ spec:
   hostPath:
     path: /opt/lidarr/config
     type: DirectoryOrCreate
-  claimRef:
-    namespace: media
-    name: lidarr-config-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

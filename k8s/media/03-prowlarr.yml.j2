@@ -17,6 +17,20 @@ spec:
       labels:
         app: prowlarr
     spec:
+      initContainers:
+        - name: init-config
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - |
+              cp /tmp/prowlarr-config/config.xml /config/config.xml
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: prowlarr-config
+              mountPath: /tmp/prowlarr-config
+              readOnly: true
       containers:
         - name: prowlarr
           image: lscr.io/linuxserver/prowlarr:latest
@@ -56,3 +70,6 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: prowlarr-config-pvc
+        - name: prowlarr-config
+          configMap:
+            name: prowlarr-config

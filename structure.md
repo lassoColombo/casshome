@@ -517,11 +517,11 @@ Jellyfin media server. Lives in the `media` namespace alongside the automation s
 | File | Purpose |
 |---|---|
 | `00-namespace.yml` | Unused — `media` namespace is created by `k8s/media/00-namespace.yml`. Kept for reference. |
-| `01-storage.yml` | Two hostPath PVs: `jellyfin-config-pv` (5Gi → `/opt/jellyfin/config`) and `jellyfin-media-pv` (500Gi → `/mnt/media`). Both bind to PVCs in the `media` namespace. |
-| `02-deployment.yml.j2` | Jellyfin deployment. Templates `JELLYFIN_PublishedServerUrl` from `k8s_node_ip` and `k8s_ingress_http_nodeport`. Init container pre-seeds `network.xml` to set `BaseUrl=/jellyfin`. Mounts config (rw) and media (ro). |
-| `03-service.yml` | ClusterIP service on port 8096 — accessed via NGINX Ingress, not directly. |
-| `04-ingress.yml` | NGINX Ingress rule: path `/jellyfin` → jellyfin service:8096. Long proxy timeouts for streaming. |
-| `05-networkconfig.yml` | ConfigMap: `network.xml` setting `BaseUrl=/jellyfin` and disabling HTTPS (TLS terminated at ingress). |
+| `00-storage.yml` | Two hostPath PVs: `jellyfin-config-pv` (5Gi → `/opt/jellyfin/config`) and `jellyfin-media-pv` (500Gi → `/mnt/media`). Both bind to PVCs in the `media` namespace. |
+| `01-deployment.yml.j2` | Jellyfin deployment. Templates `JELLYFIN_PublishedServerUrl` from `k8s_node_ip` and `k8s_ingress_http_nodeport`. Init container pre-seeds `network.xml` to set `BaseUrl=/jellyfin`. Mounts config (rw) and media (ro). |
+| `02-service.yml` | ClusterIP service on port 8096 — accessed via NGINX Ingress, not directly. |
+| `03-ingress.yml` | NGINX Ingress rule: path `/jellyfin` → jellyfin service:8096. Long proxy timeouts for streaming. |
+| `04-networkconfig.yml` | ConfigMap: `network.xml` setting `BaseUrl=/jellyfin` and disabling HTTPS (TLS terminated at ingress). |
 
 Access over VPN: `http://192.168.1.20:32018/jellyfin`
 
