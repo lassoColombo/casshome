@@ -106,7 +106,7 @@ After this: `ssh -i ~/.ssh/casshome root@192.168.1.10`
 
 ```bash
 cd ansible
-ansible-playbook playbooks/harden_proxmox.yml
+ansible-playbook playbooks/harden-proxmox.yml
 ```
 
 Disables password auth on pve1 — key only after this.
@@ -221,7 +221,7 @@ Variables available to all hosts:
 
 ## `ansible/playbooks/`
 
-### `harden_proxmox.yml`
+### `harden-proxmox.yml`
 
 Targets `pve1`. Installs the SSH public key and drops a hardened `sshd_config` drop-in (`/etc/ssh/sshd_config.d/99-hardened.conf`) that disables password auth. A handler restarts sshd only if the file changed.
 

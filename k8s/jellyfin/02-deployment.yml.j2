@@ -25,7 +25,7 @@ spec:
             - -c
             - |
               mkdir -p /config/config
-              [ -f /config/config/network.xml ] || cp /tmp/network-config/network.xml /config/config/network.xml
+              cp /tmp/network-config/network.xml /config/config/network.xml
           volumeMounts:
             - name: config
               mountPath: /config
