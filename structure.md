@@ -212,7 +212,6 @@ Variables available to all hosts:
 | Variable | Value | Purpose |
 |---|---|---|
 | `timezone` | `UTC` | System timezone |
-| `k8s_node_ip` | `192.168.1.20` | Node IP (used in kubeadm config and Jellyfin) |
 | `k8s_ingress_http_nodeport` | `32018` | NodePort the ingress controller listens on |
 | `duckdns_domain` | `kaloscasshome` | Subdomain only — no `.duckdns.org` suffix |
 | `duckdns_token` | `{{ lookup('env', 'DUCKDNS_TOKEN') }}` | DuckDNS API token — read from `.env.nu` at playbook runtime |

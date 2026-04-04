@@ -1,19 +1,36 @@
 ---
-- name: Install wireguard-tools
-  ansible.builtin.apt:
-    name: wireguard-tools
+- name: Set WireGuard manifest directory
+  ansible.builtin.set_fact:
+    wg_manifest_dir: "{{ playbook_dir }}/../../k8s/wireguard"
+
+- name: Deploy WireGuard Namespace
+  kubernetes.core.k8s:
+    src: "{{ wg_manifest_dir }}/namespace.yml"
     state: present
 
-- name: Load and persist wireguard kernel module
-  community.general.modprobe:
-    name: wireguard
+- name: Deploy WireGuard Secret
+  kubernetes.core.k8s:
     state: present
-    persistent: present
+    definition: "{{ lookup('file', wg_manifest_dir + '/config.yml') | from_yaml_all | list }}"
 
-- name: Enable IP forwarding
-  ansible.posix.sysctl:
-    name: net.ipv4.ip_forward
-    value: "1"
-    sysctl_set: true
+- name: Deploy WireGuard Storage
+  kubernetes.core.k8s:
+    definition: "{{ lookup('file', wg_manifest_dir + '/storage.yml') | from_yaml_all | list }}"
     state: present
-    reload: true
+
+- name: Deploy WireGuard Workload
+  kubernetes.core.k8s:
+    definition: "{{ lookup('template', wg_manifest_dir + '/deployment.yml.j2') | from_yaml }}"
+    state: present
+    wait: true
+    wait_condition:
+      type: Available
+      status: "True"
+
+- name: Deploy WireGuard Networking (Service/NetPol)
+  kubernetes.core.k8s:
+    src: "{{ item }}"
+    state: present
+  loop:
+    - "{{ wg_manifest_dir }}/service.yml"
+    - "{{ wg_manifest_dir }}/networkpolicy.yml"

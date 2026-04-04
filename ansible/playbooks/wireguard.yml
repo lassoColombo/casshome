@@ -1,66 +1,21 @@
 ---
-# Deploy WireGuard VPN on the gateway node and k8s cluster.
-#
-# Usage:
-#   ansible-playbook playbooks/wireguard.yml -i inventory/hosts.yml
-#
-# Prerequisites:
-#   - k8s cluster is up (run site.yml first)
-#   - kubernetes.core collection: ansible-galaxy collection install kubernetes.core
-#   - kubeconfig at ~/.kube/casshome.conf
-
-- name: WireGuard host prerequisites
+- name: Prepare WireGuard Host
   hosts: gateway
   become: true
+  tasks:
+    - name: Run host-level prep
+      ansible.builtin.include_role:
+        name: k8s
+        tasks_from: wireguard_host.yml
 
-  roles:
-    - wireguard
-
-- name: WireGuard VPN (k8s manifests)
+- name: Deploy WireGuard Workload
   hosts: localhost
   connection: local
-  gather_facts: false
   become: false
   vars_files:
-    - "{{ playbook_dir }}/../inventory/group_vars/all.yml"
-  vars:
-    manifest_dir: "{{ playbook_dir }}/../../k8s/wireguard"
-  module_defaults:
-    kubernetes.core.k8s:
-      kubeconfig: "~/.kube/casshome.conf"
-
-  tasks:
-    - name: Namespace
-      kubernetes.core.k8s:
-        src: "{{ manifest_dir }}/namespace.yml"
-        state: present
-
-    - name: WireGuard config secret
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('file', manifest_dir + '/config.yml') | from_yaml_all | list }}"
-
-    - name: Storage (PV and PVC)
-      kubernetes.core.k8s:
-        definition: "{{ lookup('file', manifest_dir + '/storage.yml') | from_yaml_all | list }}"
-        state: present
-
-    - name: Deployment
-      kubernetes.core.k8s:
-        definition: "{{ lookup('template', manifest_dir + '/deployment.yml.j2') | from_yaml }}"
-        state: present
-        wait: true
-        wait_condition:
-          type: Available
-          status: "True"
-        wait_timeout: 120
-
-    - name: Service
-      kubernetes.core.k8s:
-        src: "{{ manifest_dir }}/service.yml"
-        state: present
-
-    - name: NetworkPolicy
-      kubernetes.core.k8s:
-        src: "{{ manifest_dir }}/networkpolicy.yml"
-        state: present
+    - "../inventory/group_vars/all.yml"
+  roles:
+    - role: wireguard
+      vars:
+        ansible_kubernetes_vars:
+          kubeconfig: "~/.kube/casshome.conf"
