@@ -11,17 +11,20 @@
     KUBECONFIG: /etc/kubernetes/admin.conf
   changed_when: false
 
-- name: Install ingress-nginx via Helm
-  ansible.builtin.command: >
-    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
-    --namespace ingress-nginx
-    --create-namespace
-    --version {{ k8s_ingress_nginx_chart_version }}
-    --set controller.service.type=NodePort
-    --set controller.service.nodePorts.http={{ k8s_ingress_http_nodeport }}
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  changed_when: false
+- name: Install ingress-nginx via Helm module
+  kubernetes.core.helm:
+    name: ingress-nginx
+    chart_ref: ingress-nginx/ingress-nginx
+    release_namespace: ingress-nginx
+    create_namespace: true
+    chart_version: "{{ k8s_ingress_nginx_chart_version }}"
+    kubeconfig: /etc/kubernetes/admin.conf
+    values:
+      controller:
+        service:
+          type: NodePort
+          nodePorts:
+            http: "{{ k8s_ingress_http_nodeport }}"
 
 - name: Wait for ingress-nginx controller to be available
   ansible.builtin.command: >

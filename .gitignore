@@ -17,5 +17,4 @@ ansible/.vault_pass
 *.pem
 *.key
 
-# Editor
 .DS_Store

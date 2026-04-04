@@ -41,12 +41,14 @@
     mode: "0600"
     remote_src: true
 
-# Allow workloads on the single control-plane node
-- name: Remove control-plane taint
-  ansible.builtin.command: kubectl taint nodes --all node-role.kubernetes.io/control-plane-
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  when: not kubeadm_init_done.stat.exists
-  # Node may already be untainted on re-runs; ignore "not found" exit code
-  failed_when: false
-  changed_when: true
+- name: Allow workloads on the single control-plane node
+  kubernetes.core.k8s_taint:
+    state: absent
+    name: "{{ inventory_hostname }}"
+    taints:
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+  become: false
+  vars:
+    ansible_kubernetes_vars:
+      kubeconfig: "~/.kube/config"

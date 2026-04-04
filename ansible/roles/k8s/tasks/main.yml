@@ -30,4 +30,3 @@
 - name: Configure kubectl (alias + autocompletion)
   ansible.builtin.include_tasks: kubectl_config.yml
   tags: kubectl_config
-

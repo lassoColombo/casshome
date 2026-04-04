@@ -32,41 +32,22 @@
   tasks:
     - name: Namespace
       kubernetes.core.k8s:
-        src: "{{ manifest_dir }}/00-namespace.yml"
+        src: "{{ manifest_dir }}/namespace.yml"
         state: present
 
     - name: WireGuard config secret
       kubernetes.core.k8s:
         state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: wireguard-config
-            namespace: wireguard
-          stringData:
-            wg0.conf: |
-              [Interface]
-              Address = 10.13.13.1/24
-              ListenPort = 51820
-              PrivateKey = {{ lookup('env', 'WG_SERVER_PRIVATE_KEY') }}
-              PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o $(ip route | awk '/default/ { print $5; exit }') -j MASQUERADE
-              PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o $(ip route | awk '/default/ { print $5; exit }') -j MASQUERADE
-
-              [Peer]
-              # peer1
-              PublicKey = {{ lookup('env', 'WG_PEER1_PUBLIC_KEY') }}
-              PresharedKey = {{ lookup('env', 'WG_PEER1_PRESHARED_KEY') }}
-              AllowedIPs = 10.13.13.2/32
+        definition: "{{ lookup('file', manifest_dir + '/config.yml') | from_yaml_all | list }}"
 
     - name: Storage (PV and PVC)
       kubernetes.core.k8s:
-        definition: "{{ lookup('file', manifest_dir + '/01-storage.yml') | from_yaml_all | list }}"
+        definition: "{{ lookup('file', manifest_dir + '/storage.yml') | from_yaml_all | list }}"
         state: present
 
     - name: Deployment
       kubernetes.core.k8s:
-        definition: "{{ lookup('template', manifest_dir + '/02-deployment.yml.j2') | from_yaml }}"
+        definition: "{{ lookup('template', manifest_dir + '/deployment.yml.j2') | from_yaml }}"
         state: present
         wait: true
         wait_condition:
@@ -76,10 +57,10 @@
 
     - name: Service
       kubernetes.core.k8s:
-        src: "{{ manifest_dir }}/03-service.yml"
+        src: "{{ manifest_dir }}/service.yml"
         state: present
 
     - name: NetworkPolicy
       kubernetes.core.k8s:
-        src: "{{ manifest_dir }}/04-networkpolicy.yml"
+        src: "{{ manifest_dir }}/networkpolicy.yml"
         state: present

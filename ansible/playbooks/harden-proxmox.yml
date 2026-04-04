@@ -36,31 +36,16 @@
           options e1000e InterruptThrottleRate=0
         mode: "0644"
 
-    - name: Patch /etc/network/interfaces to disable TSO/GSO/GRO on boot (Calico workaround)
-      ansible.builtin.copy:
-        dest: /etc/network/interfaces
-        mode: "0644"
-        content: |
-          auto lo
-          iface lo inet loopback
-
-          iface nic0 inet manual
-              # e1000e I218-LM NIC hang workaround - Calico IPIP + WireGuard tunnel traffic
-              # causes TX buffer deadlock. Remove post-up line when switching CNI away from Calico.
-              post-up ethtool -K nic0 tso off gso off gro off
-
-          auto vmbr0
-          iface vmbr0 inet static
-              address 192.168.1.10/24
-              gateway 192.168.1.1
-              bridge-ports nic0
-              bridge-stp off
-              bridge-fd 0
-              # e1000e I218-LM NIC hang workaround - Calico IPIP + WireGuard tunnel traffic
-              # causes TX buffer deadlock. Remove post-up line when switching CNI away from Calico.
-              post-up ethtool -K vmbr0 tso off gso off gro off
-
-          source /etc/network/interfaces.d/*
+    - name: Disable TSO/GSO/GRO on boot (Calico workaround)
+      ansible.builtin.lineinfile:
+        path: /etc/network/interfaces
+        regexp: "^iface {{ item }} inet"
+        line: "iface {{ item }} inet manual\n    post-up ethtool -K {{ item }} tso off gso off gro off"
+        state: present
+      loop:
+        - nic0
+        - vmbr0
+      notify: Restart networking
 
     - name: Apply TSO/GSO/GRO disabling immediately on nic0 (Calico workaround)
       ansible.builtin.command:

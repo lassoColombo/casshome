@@ -1,9 +1,9 @@
 ---
-# Deploy the full media stack: qBittorrent, Prowlarr, Lidarr, and Jellyfin.
+# Deploy the full media stack: QBittorrent, Prowlarr, Lidarr, and Jellyfin.
 # All services run in the `media` namespace and share storage volumes where needed.
 #
 # Download pipeline:
-#   Prowlarr (indexers) → Lidarr (requests) → qBittorrent (downloads to /mnt/downloads)
+#   Prowlarr (indexers) → Lidarr (requests) → QBittorrent (downloads to /mnt/downloads)
 #   → Lidarr (imports to /mnt/media/music) → Jellyfin (serves from /media/music)
 #
 # Usage:
@@ -39,88 +39,119 @@
     - "{{ playbook_dir }}/../inventory/group_vars/all.yml"
   vars:
     media_dir: "{{ playbook_dir }}/../../k8s/media"
-    jellyfin_dir: "{{ playbook_dir }}/../../k8s/jellyfin"
   module_defaults:
     kubernetes.core.k8s:
       kubeconfig: "~/.kube/casshome.conf"
 
   tasks:
-    # ── Namespace ────────────────────────────────────────────────────────────
+    # ── Common ────────────────────────────────────────────────────────────
 
     - name: Namespace
       kubernetes.core.k8s:
-        src: "{{ media_dir }}/00-namespace.yml"
+        src: "{{ media_dir }}/namespace.yml"
         state: present
-
-    # ── Storage ───────────────────────────────────────────────────────────────
 
     - name: Media stack storage (PVs and PVCs)
       kubernetes.core.k8s:
-        definition: "{{ lookup('file', media_dir + '/01-storage.yml') | from_yaml_all | list }}"
+        definition: "{{ lookup('file', media_dir + '/storage.yml') | from_yaml_all | list }}"
         state: present
 
-    - name: Jellyfin storage (PVs and PVCs)
+    # ── QBittorrent ───────────────────────────────────────────────────────────────
+
+    - name: QBittorrent storage (PVs and PVCs)
       kubernetes.core.k8s:
-        definition: "{{ lookup('file', jellyfin_dir + '/00-storage.yml') | from_yaml_all | list }}"
+        definition: "{{ lookup('file', media_dir + '/qbittorrent/storage.yml') | from_yaml_all | list }}"
         state: present
 
-    # ── Config ────────────────────────────────────────────────────────────────
-
-    - name: qBittorrent config
+    - name: QBittorrent config
       kubernetes.core.k8s:
-        src: "{{ media_dir }}/06-qbittorrent-config.yml"
+        src: "{{ media_dir }}/qbittorrent/config.yml"
         state: present
 
-    - name: Lidarr config
+    - name: QBittorrent deployment
       kubernetes.core.k8s:
-        src: "{{ media_dir }}/08-lidarr-config.yml.j2"
+        definition: "{{ lookup('template', media_dir + '/qbittorrent/deployment.yml.j2') | from_yaml }}"
+        state: present
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 120
+
+    - name: QBittorrent service
+      kubernetes.core.k8s:
+        src: "{{ media_dir }}/qbittorrent/service.yml"
+        state: present
+
+    # ── Prowlarr ───────────────────────────────────────────────────────────────
+
+    - name: Prowlarr storage (PVs and PVCs)
+      kubernetes.core.k8s:
+        definition: "{{ lookup('file', media_dir + '/prowlarr/storage.yml') | from_yaml_all | list }}"
         state: present
 
     - name: Prowlarr config
       kubernetes.core.k8s:
-        src: "{{ media_dir }}/07-prowlarr-config.yml.j2"
+        src: "{{ media_dir }}/prowlarr/config.yml.j2"
+        state: present
+
+    - name: Prowlarr deployment
+      kubernetes.core.k8s:
+        definition: "{{ lookup('template', media_dir + '/prowlarr/deployment.yml.j2') | from_yaml }}"
+        state: present
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 120
+
+    - name: Prowlarr service
+      kubernetes.core.k8s:
+        src: "{{ media_dir }}/prowlarr/service.yml"
+        state: present
+
+    # ── Lidarr ───────────────────────────────────────────────────────────────
+
+    - name: Lidarr storage (PVs and PVCs)
+      kubernetes.core.k8s:
+        definition: "{{ lookup('file', media_dir + '/lidarr/storage.yml') | from_yaml_all | list }}"
+        state: present
+
+    - name: Lidarr config
+      kubernetes.core.k8s:
+        src: "{{ media_dir }}/lidarr/config.yml.j2"
+        state: present
+
+    - name: Lidarr deployment
+      kubernetes.core.k8s:
+        definition: "{{ lookup('template', media_dir + '/lidarr/deployment.yml.j2') | from_yaml }}"
+        state: present
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 120
+
+    - name: Lidarr service
+      kubernetes.core.k8s:
+        src: "{{ media_dir }}/lidarr/service.yml"
+        state: present
+
+    # ── jellyfin ────────────────────────────────────────────────────────────────
+
+    - name: Jellyfin storage (PVs and PVCs)
+      kubernetes.core.k8s:
+        definition: "{{ lookup('file', media_dir + '/jellyfin/storage.yml') | from_yaml_all | list }}"
         state: present
 
     - name: Jellyfin network config
       kubernetes.core.k8s:
-        src: "{{ jellyfin_dir }}/04-networkconfig.yml"
+        src: "{{ media_dir }}/jellyfin/config.yml"
         state: present
-
-    # ── Deployments ───────────────────────────────────────────────────────────
-
-    - name: qBittorrent deployment
-      kubernetes.core.k8s:
-        definition: "{{ lookup('template', media_dir + '/02-qbittorrent.yml.j2') | from_yaml }}"
-        state: present
-        wait: true
-        wait_condition:
-          type: Available
-          status: "True"
-        wait_timeout: 120
-
-    - name: Prowlarr deployment
-      kubernetes.core.k8s:
-        definition: "{{ lookup('template', media_dir + '/03-prowlarr.yml.j2') | from_yaml }}"
-        state: present
-        wait: true
-        wait_condition:
-          type: Available
-          status: "True"
-        wait_timeout: 120
-
-    - name: Lidarr deployment
-      kubernetes.core.k8s:
-        definition: "{{ lookup('template', media_dir + '/04-lidarr.yml.j2') | from_yaml }}"
-        state: present
-        wait: true
-        wait_condition:
-          type: Available
-          status: "True"
-        wait_timeout: 120
 
     - name: Jellyfin deployment
       kubernetes.core.k8s:
-        definition: "{{ lookup('template', jellyfin_dir + '/01-deployment.yml.j2') | from_yaml }}"
+        definition: "{{ lookup('template', media_dir + '/jellyfin/deployment.yml.j2') | from_yaml }}"
         state: present
         wait: true
         wait_condition:
@@ -128,19 +159,12 @@
           status: "True"
         wait_timeout: 120
 
-    # ── Services and Ingress ──────────────────────────────────────────────────
-
-    - name: Media stack services
-      kubernetes.core.k8s:
-        definition: "{{ lookup('file', media_dir + '/05-services.yml') | from_yaml_all | list }}"
-        state: present
-
     - name: Jellyfin service
       kubernetes.core.k8s:
-        src: "{{ jellyfin_dir }}/02-service.yml"
+        src: "{{ media_dir }}/jellyfin/service.yml"
         state: present
 
     - name: Jellyfin ingress
       kubernetes.core.k8s:
-        src: "{{ jellyfin_dir }}/03-ingress.yml"
+        src: "{{ media_dir }}/jellyfin/ingress.yml"
         state: present

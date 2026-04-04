@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: qbittorrent-config-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /opt/qbittorrent/config
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbittorrent-config-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: ""
+  volumeName: qbittorrent-config-pv
