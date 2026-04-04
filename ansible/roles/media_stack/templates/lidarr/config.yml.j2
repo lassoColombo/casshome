@@ -11,7 +11,7 @@ data:
       <SslPort>6969</SslPort>
       <EnableSsl>False</EnableSsl>
       <LaunchBrowser>False</LaunchBrowser>
-      <ApiKey>"{{ lookup('env', 'ARR_API_KEY') }}"</ApiKey>
+      <ApiKey>"{{ lookup('env', 'ARR_API_KEY') | mandatory }}"</ApiKey>
       <AuthenticationMethod>External</AuthenticationMethod>
       <Branch>master</Branch>
       <LogLevel>info</LogLevel>

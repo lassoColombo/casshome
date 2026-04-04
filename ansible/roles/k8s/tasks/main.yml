@@ -1,33 +1,37 @@
 ---
 - name: System prerequisites
-  ansible.builtin.include_tasks: prereqs.yml
-  tags: prereqs
+  ansible.builtin.import_tasks: prereqs_up.yml
+  tags: [k8s_prereqs]
 
 - name: Set up containerd runtime
-  ansible.builtin.include_tasks: containerd.yml
-  tags: containerd
+  ansible.builtin.import_tasks: containerd_up.yml
+  tags: [containerd]
 
 - name: Install Kubernetes packages
-  ansible.builtin.include_tasks: k8s_packages.yml
-  tags: k8s_packages
+  ansible.builtin.import_tasks: k8s_packages_up.yml
+  tags: [k8s_pkgs]
 
 - name: Initialize Kubernetes cluster
-  ansible.builtin.include_tasks: kubeadm_init.yml
-  tags: kubeadm
+  ansible.builtin.import_tasks: kubeadm_init_up.yml
+  tags: [kubeadm]
+
+# ── All tasks after this one will use the local kubeconfig
+- name: Copy Kubeconfig
+  ansible.builtin.import_tasks: copy_kubeconfig_up.yml
+  tags: [fetch_kubeconfig]
 
 - name: Install Helm
-  ansible.builtin.include_tasks: helm.yml
-  tags: helm
+  ansible.builtin.import_tasks: helm_up.yml
+  tags: [helm]
 
 - name: Install Calico CNI
-  ansible.builtin.include_tasks: cni.yml
-  tags: cni
+  ansible.builtin.import_tasks: cni_up.yml
+  tags: [cni]
 
 - name: Install NGINX Ingress Controller
-  ansible.builtin.include_tasks: ingress.yml
-  tags: ingress
+  ansible.builtin.import_tasks: ingress_up.yml
+  tags: [ingress]
 
 - name: Configure kubectl (alias + autocompletion)
-  ansible.builtin.include_tasks: kubectl_config.yml
-  tags: kubectl_config
-
+  ansible.builtin.import_tasks: kubectl_config_up.yml
+  tags: [kubectl_config]

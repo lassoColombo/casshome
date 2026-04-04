@@ -1,0 +1,50 @@
+---
+- name: Deploy Calico locally
+  delegate_to: localhost
+  become: false
+  module_defaults:
+    kubernetes.core.k8s:
+      kubeconfig: "{{ local_kubeconfig }}"
+  block:
+    - name: Add Calico (Tigera) Helm repo
+      ansible.builtin.command: helm repo add projectcalico https://docs.tigera.io/calico/charts
+      changed_when: false
+
+    - name: Update Helm repos
+      ansible.builtin.command: helm repo update
+      changed_when: false
+
+    - name: Install Calico via Tigera operator Helm chart
+      kubernetes.core.helm:
+        name: calico
+        chart_ref: projectcalico/tigera-operator
+        release_namespace: tigera-operator
+        create_namespace: true
+        chart_version: "{{ k8s_calico_chart_version }}"
+        kubeconfig: "~/.kube/casshome.conf"
+        values:
+          installation:
+            calicoNetwork:
+              ipPools:
+                - cidr: "{{ k8s_pod_cidr }}"
+                  encapsulation: IPIP
+
+    - name: Wait for Calico node to be ready
+      changed_when: false
+      register: calico_ready
+      retries: 10
+      delay: 15
+      until: calico_ready.rc == 0
+      ansible.builtin.command: >
+        kubectl -n calico-system wait daemonset/calico-node
+        --for=jsonpath='{.status.numberReady}'=1 --timeout=300s
+
+    - name: Wait for node to be Ready
+      changed_when: false
+      register: node_ready
+      retries: 5
+      delay: 15
+      until: node_ready.rc == 0
+      ansible.builtin.command: >
+        kubectl wait node --all
+        --for=condition=Ready --timeout=300s

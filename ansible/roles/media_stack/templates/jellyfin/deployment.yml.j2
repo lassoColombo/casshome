@@ -40,7 +40,7 @@ spec:
               name: http
           env:
             - name: JELLYFIN_PublishedServerUrl
-              value: http://{{ k8s_node_ip }}:{{ k8s_ingress_http_nodeport }}/jellyfin
+              value: http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/jellyfin
           resources:
             requests:
               cpu: 500m

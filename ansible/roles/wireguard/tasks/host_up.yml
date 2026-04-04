@@ -1,23 +1,15 @@
----
 - name: Install wireguard-tools
   ansible.builtin.apt:
     name: wireguard-tools
     state: present
 
-- name: Load wireguard kernel module
+- name: Load and persist wireguard kernel module
   community.general.modprobe:
     name: wireguard
     state: present
+    persistent: present
 
-- name: Persist wireguard module across reboots
-  ansible.builtin.copy:
-    dest: /etc/modules-load.d/wireguard.conf
-    content: "wireguard\n"
-    owner: root
-    group: root
-    mode: "0644"
-
-- name: Enable IP forwarding
+- name: Ensure IP forwarding is enabled
   ansible.posix.sysctl:
     name: net.ipv4.ip_forward
     value: "1"

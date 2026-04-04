@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: wireguard-config
+  namespace: wireguard
+stringData:
+  wg0.conf: |
+    [Interface]
+    Address = "{{ wireguard_ip }}"
+    ListenPort = 51820
+    PrivateKey = {{ lookup('env', 'WG_SERVER_PRIVATE_KEY') | mandatory }}
+    PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o $(ip route | awk '/default/ { print $5; exit }') -j MASQUERADE
+    PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o $(ip route | awk '/default/ { print $5; exit }') -j MASQUERADE
+
+    [Peer]
+    # peer1
+    PublicKey = {{ lookup('env', 'WG_PEER1_PUBLIC_KEY') | mandatory }}
+    PresharedKey = {{ lookup('env', 'WG_PEER1_PRESHARED_KEY') | mandatory }}
+    AllowedIPs = 10.13.13.2/32

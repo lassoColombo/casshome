@@ -1,2 +1,4 @@
 ---
 duckdns_dir: /opt/duckdns
+duckdns_domain: "kaloscasshome" # subdomain only, e.g. myhome (not myhome.duckdns.org)
+duckdns_token: "{{ lookup('env', 'DUCKDNS_TOKEN') | mandatory }}"

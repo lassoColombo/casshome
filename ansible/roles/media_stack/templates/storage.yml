@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.31.0/list.json
+#
+# hostPath PVs for the media stack (single-node cluster).
+# All three apps share the `media-downloads` volume.
+---
+# Shared: qBittorrent writes here, Lidarr reads and imports from here
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-downloads-pv
+spec:
+  capacity:
+    storage: 200Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /mnt/downloads
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-downloads-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Gi
+  storageClassName: ""
+  volumeName: media-downloads-pv
+---
+# Lidarr: organised music library (Jellyfin reads /mnt/media/music via its media PV)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-music-pv
+spec:
+  capacity:
+    storage: 500Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /mnt/media/music
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-music-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: ""
+  volumeName: media-music-pv

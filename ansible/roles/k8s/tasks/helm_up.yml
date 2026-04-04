@@ -1,0 +1,26 @@
+---
+- name: Check if Helm is installed
+  ansible.builtin.command: helm version
+  register: helm_installed
+  ignore_errors: true
+  changed_when: false
+
+- name: Install Helm
+  when: helm_installed.rc != 0
+  block:
+    - name: Download Helm installation script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        dest: /tmp/get_helm.sh
+        mode: "0700"
+      when: helm_installed.rc != 0
+
+    - name: Run Helm installation script
+      ansible.builtin.command: /tmp/get_helm.sh
+      when: helm_installed.rc != 0
+      changed_when: true
+
+    - name: Cleanup Helm script
+      ansible.builtin.file:
+        path: /tmp/get_helm.sh
+        state: absent

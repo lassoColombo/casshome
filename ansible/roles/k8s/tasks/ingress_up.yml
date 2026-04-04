@@ -1,0 +1,41 @@
+---
+- name: Deploy Ingress locally
+  delegate_to: localhost
+  become: false
+  module_defaults:
+    kubernetes.core.k8s:
+      kubeconfig: "{{ local_kubeconfig }}"
+
+  block:
+    - name: Add ingress-nginx Helm repo
+      ansible.builtin.command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+      changed_when: false
+
+    - name: Update Helm repos
+      ansible.builtin.command: helm repo update
+      changed_when: false
+
+    - name: Install ingress-nginx via Helm module
+      kubernetes.core.helm:
+        name: ingress-nginx
+        chart_ref: ingress-nginx/ingress-nginx
+        release_namespace: ingress-nginx
+        create_namespace: true
+        chart_version: "{{ k8s_ingress_nginx_chart_version }}"
+        kubeconfig: "~/.kube/casshome.conf"
+        values:
+          controller:
+            service:
+              type: NodePort
+              nodePorts:
+                http: "{{ k8s_ingress_http_nodeport }}"
+
+    - name: Wait for ingress-nginx controller to be available
+      ansible.builtin.command: >
+        kubectl -n ingress-nginx wait deployment ingress-nginx-controller
+        --for=condition=Available --timeout=300s
+      changed_when: false
+      register: ingress_ready
+      retries: 5
+      delay: 15
+      until: ingress_ready.rc == 0

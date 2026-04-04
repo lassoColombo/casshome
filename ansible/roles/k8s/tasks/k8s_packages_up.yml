@@ -1,0 +1,34 @@
+---
+- name: Add Kubernetes apt repository
+  ansible.builtin.deb822_repository:
+    name: kubernetes
+    types: [deb]
+    uris: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/"
+    suites: ["/"]
+    signed_by: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key"
+    state: present
+
+- name: Install kubelet, kubeadm, kubectl
+  ansible.builtin.apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: true
+
+# Prevent unattended-upgrades from bumping the k8s binaries mid-cluster
+- name: Hold kubelet, kubeadm, kubectl at current version
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Enable and start kubelet
+  ansible.builtin.service:
+    name: kubelet
+    enabled: true
+    state: started

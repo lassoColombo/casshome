@@ -16,6 +16,9 @@ spec:
   hostPath:
     path: /opt/jellyfin/config # created automatically by kubelet
     type: DirectoryOrCreate
+  claimRef:
+    namespace: media
+    name: jellyfin-config-pvc
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -31,6 +34,9 @@ spec:
   hostPath:
     path: /mnt/media # change to your media directory on the node
     type: DirectoryOrCreate
+  claimRef:
+    namespace: media
+    name: jellyfin-media-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

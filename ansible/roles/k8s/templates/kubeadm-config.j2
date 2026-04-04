@@ -1,13 +1,17 @@
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: InitConfiguration
 localAPIEndpoint:
-  advertiseAddress: "{{ k8s_node_ip }}"
+  advertiseAddress: "{{ ansible_host }}"
   bindPort: 6443
 nodeRegistration:
   criSocket: "unix:///run/containerd/containerd.sock"
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
+apiServer:
+  certSANs:
+    - "localhost"
+    - "{{ wireguard_ip }}"
 networking:
   podSubnet: "{{ k8s_pod_cidr }}"
   serviceSubnet: "{{ k8s_service_cidr }}"
