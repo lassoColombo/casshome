@@ -1,26 +1,64 @@
 ---
-- name: Configure k8s Nodes
+- name: Infrastructure - Proxmox
+  hosts: proxmox
+  become: true
+  roles:
+    - role: proxmox
+  tags: [proxmox, infra]
+
+- name: Kubernetes - Host & Cluster Layer
   hosts: k8s
   become: true
   roles:
-    - common
-    - k8s
+    - role: common
+      tags: [common]
+    - role: k8s
+      tags: [k8s, cluster]
+  tags: [k8s]
 
-- name: Configure Gateway Specific Services
+- name: Network - Gateway Layer
   hosts: gateway
-  gather_facts: false
   become: true
   tasks:
     - name: Label Node as Gateway
       delegate_to: localhost
       become: false
       kubernetes.core.k8s:
+        kubeconfig: "~/.kube/casshome.conf"
         kind: Node
         name: "{{ inventory_hostname }}"
         definition:
           metadata:
             labels:
               network-role: gateway
-  roles:
-    - duckdns
-    - wireguard
+      tags: [k8s_labels]
+
+    - name: Import DuckDNS and Wireguard
+      ansible.builtin.include_role:
+        name: "{{ item }}"
+      loop:
+        - duckdns
+        - wireguard
+      tags: [gateway, network]
+
+- name: Apps - Media Stack Layer
+  hosts: media
+  become: true
+  tasks:
+    - name: Label Node as Media
+      delegate_to: localhost
+      become: false
+      kubernetes.core.k8s:
+        kubeconfig: "~/.kube/casshome.conf"
+        kind: Node
+        name: "{{ inventory_hostname }}"
+        definition:
+          metadata:
+            labels:
+              stack-role: media
+      tags: [k8s_labels]
+
+    - name: Import Media Stack
+      ansible.builtin.import_role:
+        name: media_stack
+      tags: [media_stack, apps]

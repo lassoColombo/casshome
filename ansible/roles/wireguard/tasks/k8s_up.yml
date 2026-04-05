@@ -1,0 +1,30 @@
+---
+- name: Create WireGuard Namespace
+  kubernetes.core.k8s:
+    template: namespace.yml
+    state: present
+
+- name: Deploy WireGuard Secret (Config)
+  kubernetes.core.k8s:
+    template: config.yml.j2
+    state: present
+
+- name: Deploy WireGuard Storage
+  kubernetes.core.k8s:
+    template: storage.yml
+    state: present
+
+- name: Deploy WireGuard Deployment
+  kubernetes.core.k8s:
+    template: deployment.yml.j2
+    state: present
+    wait: true
+    wait_condition:
+      type: Available
+      status: "True"
+    wait_timeout: 120
+
+- name: Deploy WireGuard Service
+  kubernetes.core.k8s:
+    template: service.yml
+    state: present

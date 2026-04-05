@@ -1,34 +1,7 @@
----
-- name: Set WireGuard manifest directory
-  ansible.builtin.set_fact:
-    wg_template_dir: "{{ playbook_dir }}/../roles/wireguard/templates"
+- name: System prerequisites
+  ansible.builtin.import_tasks: host_up.yml
+  tags: [wireguard_prereqs]
 
-- name: Create WireGuard Namespace
-  kubernetes.core.k8s:
-    src: "{{ wg_template_dir }}/namespace.yml"
-    state: present
-
-- name: Deploy WireGuard Secret (Config)
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('template', wg_template_dir + '/config.yml.j2') | from_yaml }}"
-
-- name: Deploy WireGuard Storage
-  kubernetes.core.k8s:
-    src: "{{ wg_template_dir }}/storage.yml"
-    state: present
-
-- name: Deploy WireGuard Deployment
-  kubernetes.core.k8s:
-    definition: "{{ lookup('template', wg_template_dir + '/deployment.yml.j2') | from_yaml }}"
-    state: present
-    wait: true
-    wait_condition:
-      type: Available
-      status: "True"
-    wait_timeout: 120
-
-- name: Deploy WireGuard Service
-  kubernetes.core.k8s:
-    src: "{{ wg_template_dir }}/service.yml"
-    state: present
+- name: Deploy on k8s
+  ansible.builtin.import_tasks: k8s_up.yml
+  tags: [wireguard_k8s_install]

@@ -1,0 +1,17 @@
+---
+- name: Ensure SSH authorized key is present for root
+  ansible.posix.authorized_key:
+    user: root
+    key: "{{ lookup('file', '~/.ssh/casshome.pub') }}"
+    state: present
+
+- name: Drop hardened sshd config
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/99-hardened.conf
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin prohibit-password
+      PubkeyAuthentication yes
+    mode: "0600"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Restart sshd

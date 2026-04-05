@@ -1,0 +1,8 @@
+---
+- name: Harden SSH
+  ansible.builtin.import_tasks: harden_ssh_up.yml
+  tags: [proxmox_ssh, harden]
+
+- name: Apply NIC performance workarounds
+  ansible.builtin.import_tasks: nic_workaround_up.yml
+  tags: [proxmox_nic, nic_fix]

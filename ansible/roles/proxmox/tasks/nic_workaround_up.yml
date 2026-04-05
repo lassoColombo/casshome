@@ -1,0 +1,28 @@
+---
+# The Intel I218-LM onboard NIC (e1000e driver) deadlocks its TX buffer under
+# tunneled traffic (Calico IPIP + WireGuard UDP).
+- name: Drop e1000e modprobe config
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/e1000e.conf
+    content: |
+      options e1000e InterruptThrottleRate=0
+    mode: "0644"
+
+- name: Disable TSO/GSO/GRO on boot in interfaces
+  ansible.builtin.lineinfile:
+    path: /etc/network/interfaces
+    regexp: "^iface {{ item }} inet"
+    line: "iface {{ item }} inet manual\n    post-up ethtool -K {{ item }} tso off gso off gro off"
+    state: present
+  loop:
+    - nic0
+    - vmbr0
+  notify: Restart networking
+
+- name: Apply TSO/GSO/GRO disabling immediately
+  ansible.builtin.command:
+    cmd: "ethtool -K {{ item }} tso off gso off gro off"
+  loop:
+    - nic0
+    - vmbr0
+  changed_when: true

@@ -49,7 +49,7 @@
     taints:
       - key: node-role.kubernetes.io/control-plane
         effect: NoSchedule
-  become: false
+  become: true
   vars:
     ansible_kubernetes_vars:
-      kubeconfig: "~/.kube/casshome.conf"
+      kubeconfig: "/etc/kubernetes/admin.conf"

@@ -1,0 +1,125 @@
+---
+# ── Common Kube Resources ──────────────────────────────────────────────────────
+- name: Infrastructure - Common Dependencies
+  tags: [media_infra, media_common]
+  block:
+    - name: Namespace
+      kubernetes.core.k8s:
+        template: namespace.yml
+        state: present
+    - name: Media stack shared storage
+      kubernetes.core.k8s:
+        template: storage.yml
+        state: present
+      tags: [media_infra, storage]
+
+# ── QBittorrent ───────────────────────────────────────────────────────────────
+- name: App - QBittorrent
+  tags: [qbittorrent]
+  block:
+    - name: QBittorrent storage (PVs and PVCs)
+      kubernetes.core.k8s:
+        template: qbittorrent/storage.yml
+        state: present
+    - name: QBittorrent config
+      kubernetes.core.k8s:
+        template: qbittorrent/config.yml
+        state: present
+    - name: QBittorrent deployment
+      kubernetes.core.k8s:
+        template: qbittorrent/deployment.yml.j2
+        state: present
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 120
+    - name: QBittorrent service
+      kubernetes.core.k8s:
+        template: qbittorrent/service.yml
+        state: present
+
+# ── Prowlarr ───────────────────────────────────────────────────────────────
+
+- name: App - Prowlarr
+  tags: [prowlarr]
+  block:
+    - name: Prowlarr storage (PVs and PVCs)
+      kubernetes.core.k8s:
+        template: prowlarr/storage.yml
+        state: present
+    - name: Prowlarr config
+      kubernetes.core.k8s:
+        template: prowlarr/config.yml.j2
+        state: present
+    - name: Prowlarr deployment
+      kubernetes.core.k8s:
+        template: prowlarr/deployment.yml.j2
+        state: present
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 120
+    - name: Prowlarr service
+      kubernetes.core.k8s:
+        template: prowlarr/service.yml
+        state: present
+
+# ── Lidarr ───────────────────────────────────────────────────────────────
+
+- name: App - Lidarr
+  tags: [lidarr]
+  block:
+    - name: Lidarr storage (PVs and PVCs)
+      kubernetes.core.k8s:
+        template: lidarr/storage.yml
+        state: present
+    - name: Lidarr config
+      kubernetes.core.k8s:
+        template: lidarr/config.yml.j2
+        state: present
+    - name: Lidarr deployment
+      kubernetes.core.k8s:
+        template: lidarr/deployment.yml.j2
+        state: present
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 120
+    - name: Lidarr service
+      kubernetes.core.k8s:
+        template: lidarr/service.yml
+        state: present
+
+# ── jellyfin ────────────────────────────────────────────────────────────────
+
+- name: App - Jellyfin
+  tags: [jellyfin]
+  block:
+    - name: Jellyfin storage (PVs and PVCs)
+      kubernetes.core.k8s:
+        template: jellyfin/storage.yml
+        state: present
+    - name: Jellyfin network config
+      kubernetes.core.k8s:
+        template: jellyfin/config.yml
+        state: present
+    - name: Jellyfin deployment
+      kubernetes.core.k8s:
+        template: jellyfin/deployment.yml.j2
+        state: present
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 120
+    - name: Jellyfin service
+      kubernetes.core.k8s:
+        template: jellyfin/service.yml
+        state: present
+    - name: Jellyfin ingress
+      kubernetes.core.k8s:
+        template: jellyfin/ingress.yml
+        state: present
