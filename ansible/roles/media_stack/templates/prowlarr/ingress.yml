@@ -1,10 +1,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: jellyfin
+  name: prowlarr
   namespace: media
   annotations:
-    # nginx.ingress.kubernetes.io/proxy-body-size: "0"         # allow large uploads
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
 spec:
@@ -12,10 +11,10 @@ spec:
   rules:
     - http:
         paths:
-          - path: /media/jellyfin
+          - path: /media/prowlarr
             pathType: Prefix
             backend:
               service:
-                name: jellyfin
+                name: prowlarr
                 port:
-                  number: 8096
+                  number: 9696

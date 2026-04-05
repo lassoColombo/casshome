@@ -13,5 +13,4 @@ spec:
     - name: webui
       port: 8080
       targetPort: 8080
-      nodePort: 32080
-  type: NodePort
+  type: ClusterIP

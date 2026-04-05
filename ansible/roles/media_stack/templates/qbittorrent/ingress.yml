@@ -1,10 +1,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: jellyfin
+  name: qbittorrent
   namespace: media
   annotations:
-    # nginx.ingress.kubernetes.io/proxy-body-size: "0"         # allow large uploads
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
 spec:
@@ -12,10 +12,10 @@ spec:
   rules:
     - http:
         paths:
-          - path: /media/jellyfin
-            pathType: Prefix
+          - path: /media/qbittorrent(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
-                name: jellyfin
+                name: qbittorrent
                 port:
-                  number: 8096
+                  number: 8080

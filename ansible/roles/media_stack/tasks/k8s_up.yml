@@ -45,6 +45,11 @@
           kubernetes.core.k8s:
             template: qbittorrent/service.yml
             state: present
+            force: true
+        - name: QBittorrent ingress
+          kubernetes.core.k8s:
+            template: qbittorrent/ingress.yml
+            state: present
 
     # ── Prowlarr ───────────────────────────────────────────────────────────────
 
@@ -72,6 +77,11 @@
           kubernetes.core.k8s:
             template: prowlarr/service.yml
             state: present
+            force: true
+        - name: Prowlarr ingress
+          kubernetes.core.k8s:
+            template: prowlarr/ingress.yml
+            state: present
 
     # ── Lidarr ───────────────────────────────────────────────────────────────
 
@@ -98,6 +108,11 @@
         - name: Lidarr service
           kubernetes.core.k8s:
             template: lidarr/service.yml
+            state: present
+            force: true
+        - name: Lidarr ingress
+          kubernetes.core.k8s:
+            template: lidarr/ingress.yml
             state: present
 
     # ── jellyfin ────────────────────────────────────────────────────────────────

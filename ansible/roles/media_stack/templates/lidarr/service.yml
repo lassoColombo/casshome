@@ -13,5 +13,4 @@ spec:
     - name: http
       port: 8686
       targetPort: 8686
-      nodePort: 32686
-  type: NodePort
+  type: ClusterIP
