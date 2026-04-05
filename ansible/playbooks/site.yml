@@ -27,7 +27,6 @@
       delegate_to: localhost
       become: false
       kubernetes.core.k8s:
-        kubeconfig: "~/.kube/casshome.conf"
         kind: Node
         name: "{{ inventory_hostname }}"
         definition:
@@ -55,7 +54,6 @@
       delegate_to: localhost
       become: false
       kubernetes.core.k8s:
-        kubeconfig: "~/.kube/casshome.conf"
         kind: Node
         name: "{{ inventory_hostname }}"
         definition:

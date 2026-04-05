@@ -5,7 +5,6 @@
   module_defaults:
     kubernetes.core.k8s:
       kubeconfig: "{{ local_kubeconfig }}"
-
   block:
     - name: Add ingress-nginx Helm repo
       ansible.builtin.command: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -22,7 +21,6 @@
         release_namespace: ingress-nginx
         create_namespace: true
         chart_version: "{{ k8s_ingress_nginx_chart_version }}"
-        kubeconfig: "~/.kube/casshome.conf"
         values:
           controller:
             service:

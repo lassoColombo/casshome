@@ -21,7 +21,6 @@
         release_namespace: tigera-operator
         create_namespace: true
         chart_version: "{{ k8s_calico_chart_version }}"
-        kubeconfig: "~/.kube/casshome.conf"
         values:
           installation:
             calicoNetwork:

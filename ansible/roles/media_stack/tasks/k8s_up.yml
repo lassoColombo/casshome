@@ -4,7 +4,7 @@
   become: false
   module_defaults:
     kubernetes.core.k8s:
-      kubeconfig: "~/.kube/casshome.conf"
+      kubeconfig: "{{ local_kubeconfig }}"
   block:
     # ── Common Kube Resources ──────────────────────────────────────────────────────
     - name: Infrastructure - Common Dependencies
