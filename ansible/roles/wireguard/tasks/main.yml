@@ -1,36 +1,34 @@
 ---
 - name: Set WireGuard manifest directory
   ansible.builtin.set_fact:
-    wg_manifest_dir: "{{ playbook_dir }}/../../k8s/wireguard"
+    wg_template_dir: "{{ playbook_dir }}/../roles/wireguard/templates"
 
-- name: Deploy WireGuard Namespace
+- name: Create WireGuard Namespace
   kubernetes.core.k8s:
-    src: "{{ wg_manifest_dir }}/namespace.yml"
+    src: "{{ wg_template_dir }}/namespace.yml"
     state: present
 
-- name: Deploy WireGuard Secret
+- name: Deploy WireGuard Secret (Config)
   kubernetes.core.k8s:
     state: present
-    definition: "{{ lookup('file', wg_manifest_dir + '/config.yml') | from_yaml_all | list }}"
+    definition: "{{ lookup('template', wg_template_dir + '/config.yml.j2') | from_yaml }}"
 
 - name: Deploy WireGuard Storage
   kubernetes.core.k8s:
-    definition: "{{ lookup('file', wg_manifest_dir + '/storage.yml') | from_yaml_all | list }}"
+    src: "{{ wg_template_dir }}/storage.yml"
     state: present
 
-- name: Deploy WireGuard Workload
+- name: Deploy WireGuard Deployment
   kubernetes.core.k8s:
-    definition: "{{ lookup('template', wg_manifest_dir + '/deployment.yml.j2') | from_yaml }}"
+    definition: "{{ lookup('template', wg_template_dir + '/deployment.yml.j2') | from_yaml }}"
     state: present
     wait: true
     wait_condition:
       type: Available
       status: "True"
+    wait_timeout: 120
 
-- name: Deploy WireGuard Networking (Service/NetPol)
+- name: Deploy WireGuard Service
   kubernetes.core.k8s:
-    src: "{{ item }}"
+    src: "{{ wg_template_dir }}/service.yml"
     state: present
-  loop:
-    - "{{ wg_manifest_dir }}/service.yml"
-    - "{{ wg_manifest_dir }}/networkpolicy.yml"

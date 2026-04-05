@@ -1,8 +1,26 @@
 ---
-- name: Configure k8s nodes
+- name: Configure k8s Nodes
   hosts: k8s
   become: true
-
   roles:
     - common
     - k8s
+
+- name: Configure Gateway Specific Services
+  hosts: gateway
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Label Node as Gateway
+      delegate_to: localhost
+      become: false
+      kubernetes.core.k8s:
+        kind: Node
+        name: "{{ inventory_hostname }}"
+        definition:
+          metadata:
+            labels:
+              network-role: gateway
+  roles:
+    - duckdns
+    - wireguard

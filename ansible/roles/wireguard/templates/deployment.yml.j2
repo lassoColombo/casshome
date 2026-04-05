@@ -18,6 +18,8 @@ spec:
         app: wireguard
     spec:
       hostNetwork: true
+      nodeSelector:
+        network-role: gateway
       containers:
         - name: wireguard
           image: lscr.io/linuxserver/wireguard:latest

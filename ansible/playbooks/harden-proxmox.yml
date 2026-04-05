@@ -20,13 +20,14 @@
           PermitRootLogin prohibit-password
           PubkeyAuthentication yes
         mode: "0600"
+        # This prevents the task from completing if the config is invalid
+        validate: /usr/sbin/sshd -t -f %s
       notify: Restart sshd
 
     # The Intel I218-LM onboard NIC (e1000e driver) deadlocks its TX buffer under
     # tunneled traffic (Calico IPIP + WireGuard UDP). Disabling TSO/GSO/GRO on the
     # physical NIC and the bridge prevents the hang.
     # TODO: remove these three tasks when switching CNI away from Calico.
-
     - name: Drop e1000e modprobe config (Calico workaround)
       ansible.builtin.copy:
         dest: /etc/modprobe.d/e1000e.conf

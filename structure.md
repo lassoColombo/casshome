@@ -234,7 +234,7 @@ Configures every node in the `k8s` group. Applies two roles:
 common → k8s
 ```
 
-Idempotent — safe to re-run on any or all k8s nodes. Each role uses `include_tasks` + tags for targeted runs. Does **not** include DuckDNS or WireGuard — those are gateway-specific and live in their own playbooks.
+Idempotent — safe to re-run on any or all k8s nodes. Each role uses `import_tasks` + tags for targeted runs. Does **not** include DuckDNS or WireGuard — those are gateway-specific and live in their own playbooks.
 
 ### `duckdns.yml`
 

@@ -11,6 +11,5 @@
 - name: DuckDNS dynamic DNS
   hosts: gateway
   become: true
-
   roles:
     - duckdns

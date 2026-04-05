@@ -15,6 +15,8 @@
 
     - name: Run kubeadm init
       ansible.builtin.command: kubeadm init --config /tmp/kubeadm-config.yaml
+      args:
+        creates: /etc/kubernetes/admin.conf
       register: kubeadm_init_result
 
   always:
@@ -23,7 +25,6 @@
         path: /tmp/kubeadm-config.yaml
         state: absent
 
-# Run on every playbook pass so the kubeconfig is always present and current
 - name: Create .kube directory for {{ k8s_admin_user }}
   ansible.builtin.file:
     path: /home/{{ k8s_admin_user }}/.kube
@@ -51,4 +52,4 @@
   become: false
   vars:
     ansible_kubernetes_vars:
-      kubeconfig: "~/.kube/config"
+      kubeconfig: "~/.kube/casshome.conf"

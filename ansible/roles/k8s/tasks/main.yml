@@ -1,39 +1,36 @@
 ---
 - name: System prerequisites
-  ansible.builtin.include_tasks: prereqs.yml
+  ansible.builtin.import_tasks: prereqs.yml
   tags: prereqs
 
 - name: Set up containerd runtime
-  ansible.builtin.include_tasks: containerd.yml
+  ansible.builtin.import_tasks: containerd.yml
   tags: containerd
 
 - name: Install Kubernetes packages
-  ansible.builtin.include_tasks: k8s_packages.yml
+  ansible.builtin.import_tasks: k8s_packages.yml
   tags: k8s_packages
 
 - name: Initialize Kubernetes cluster
-  ansible.builtin.include_tasks: kubeadm_init.yml
+  ansible.builtin.import_tasks: kubeadm_init.yml
   tags: kubeadm
 
 - name: Install Helm
-  ansible.builtin.include_tasks: helm.yml
+  ansible.builtin.import_tasks: helm.yml
   tags: helm
 
 - name: Install Calico CNI
-  ansible.builtin.include_tasks: cni.yml
+  ansible.builtin.import_tasks: cni.yml
   tags: cni
 
 - name: Install NGINX Ingress Controller
-  ansible.builtin.include_tasks: ingress.yml
+  ansible.builtin.import_tasks: ingress.yml
   tags: ingress
 
 - name: Configure kubectl (alias + autocompletion)
-  ansible.builtin.include_tasks: kubectl_config.yml
+  ansible.builtin.import_tasks: kubectl_config.yml
   tags: kubectl_config
 
-- name: Configure Gateway Node
-  when: "'gateway' in group_names"
-  block:
-    - name: Install Wireguard Tools
-      ansible.builtin.include_tasks: wireguard_host.yml
-      tags: wireguard_host
+- name: Copy Kubeconfig
+  ansible.builtin.import_tasks: copy_kubeconfig.yml
+  tags: copy_kubeconfig

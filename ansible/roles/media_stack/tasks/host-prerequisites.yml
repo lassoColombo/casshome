@@ -1,0 +1,13 @@
+- name: Create downloads directory
+  ansible.builtin.file:
+    path: /mnt/downloads
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"
+
+- name: Create music library directory
+  ansible.builtin.file:
+    path: /mnt/media/music
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"

@@ -11,8 +11,19 @@
   register: k8s_keyring_stat
 
 - name: Add Kubernetes apt signing key
+  ansible.builtin.get_url:
+    url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key"
+    dest: /tmp/kubernetes-release.key
+    mode: "0644"
+  when: not k8s_keyring_stat.stat.exists
+
+- name: Dearmor Kubernetes apt signing key
   ansible.builtin.shell: |
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    set -o pipefail
+    gpg --dearmor < /tmp/kubernetes-release.key > /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  args:
+    executable: /bin/bash
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
   when: not k8s_keyring_stat.stat.exists
 
 - name: Add Kubernetes apt repository

@@ -6,7 +6,7 @@ metadata:
 stringData:
   wg0.conf: |
     [Interface]
-    Address = 10.13.13.1/24
+    Address = "{{ wireguard_ip }}"
     ListenPort = 51820
     PrivateKey = {{ lookup('env', 'WG_SERVER_PRIVATE_KEY') }}
     PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o $(ip route | awk '/default/ { print $5; exit }') -j MASQUERADE
