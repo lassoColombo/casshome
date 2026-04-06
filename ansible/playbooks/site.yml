@@ -18,30 +18,32 @@
 
 - name: Network - Gateway Layer
   hosts: gateway
+  tags: [gateway]
   become: true
   module_defaults:
     kubernetes.core.k8s:
       kubeconfig: "{{ local_kubeconfig }}"
   tasks:
     - name: Label Node as Gateway
+      tags: [gateway]
       delegate_to: localhost
       become: false
       kubernetes.core.k8s:
+        kubeconfig: "{{ local_kubeconfig }}"
         kind: Node
         name: "{{ inventory_hostname }}"
         definition:
           metadata:
             labels:
               network-role: gateway
-      tags: [k8s_labels]
 
     - name: Import DuckDNS and Wireguard
+      tags: [gateway, wireguard]
       ansible.builtin.include_role:
         name: "{{ item }}"
       loop:
         - duckdns
         - wireguard
-      tags: [gateway, network]
 
 - name: Apps - Media Stack Layer
   hosts: media

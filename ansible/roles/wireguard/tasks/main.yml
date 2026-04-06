@@ -4,4 +4,4 @@
 
 - name: Deploy on k8s
   ansible.builtin.import_tasks: k8s_up.yml
-  tags: [wireguard_k8s_install]
+  tags: [wireguard_k8s_install, network]
