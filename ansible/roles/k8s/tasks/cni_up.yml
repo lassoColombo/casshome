@@ -15,18 +15,16 @@
       changed_when: false
 
     - name: Install Calico via Tigera operator Helm chart
-      kubernetes.core.helm:
-        name: calico
-        chart_ref: projectcalico/tigera-operator
-        release_namespace: tigera-operator
-        create_namespace: true
-        chart_version: "{{ k8s_calico_chart_version }}"
-        values:
-          installation:
-            calicoNetwork:
-              ipPools:
-                - cidr: "{{ k8s_pod_cidr }}"
-                  encapsulation: IPIP
+      ansible.builtin.command: >
+        helm upgrade --install calico projectcalico/tigera-operator
+        --namespace tigera-operator
+        --create-namespace
+        --version {{ k8s_calico_chart_version }}
+        --set "installation.calicoNetwork.ipPools[0].cidr={{ k8s_pod_cidr }}"
+        --set "installation.calicoNetwork.ipPools[0].encapsulation=IPIP"
+      environment:
+        KUBECONFIG: "{{ local_kubeconfig }}"
+      changed_when: false
 
     - name: Wait for Calico node to be ready
       changed_when: false
@@ -35,7 +33,8 @@
       delay: 15
       until: calico_ready.rc == 0
       ansible.builtin.command: >
-        kubectl -n calico-system wait daemonset/calico-node
+        kubectl --kubeconfig {{ local_kubeconfig }}
+        -n calico-system wait daemonset/calico-node
         --for=jsonpath='{.status.numberReady}'=1 --timeout=300s
 
     - name: Wait for node to be Ready
@@ -45,5 +44,6 @@
       delay: 15
       until: node_ready.rc == 0
       ansible.builtin.command: >
-        kubectl wait node --all
+        kubectl --kubeconfig {{ local_kubeconfig }}
+        wait node --all
         --for=condition=Ready --timeout=300s

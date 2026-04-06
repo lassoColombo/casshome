@@ -32,7 +32,7 @@
 
 - name: Disable swap immediately if enabled
   ansible.builtin.command: swapoff -a
-  when: ansible_swaptotal_mb > 0
+  when: ansible_facts["swaptotal_mb"] > 0
   changed_when: true
 
 - name: Ensure swap is commented out in /etc/fstab

@@ -14,23 +14,22 @@
       ansible.builtin.command: helm repo update
       changed_when: false
 
-    - name: Install ingress-nginx via Helm module
-      kubernetes.core.helm:
-        name: ingress-nginx
-        chart_ref: ingress-nginx/ingress-nginx
-        release_namespace: ingress-nginx
-        create_namespace: true
-        chart_version: "{{ k8s_ingress_nginx_chart_version }}"
-        values:
-          controller:
-            service:
-              type: NodePort
-              nodePorts:
-                http: "{{ k8s_ingress_http_nodeport }}"
+    - name: Install ingress-nginx via Helm chart
+      ansible.builtin.command: >
+        helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx
+        --namespace ingress-nginx
+        --create-namespace
+        --version {{ k8s_ingress_nginx_chart_version }}
+        --set "controller.service.type=NodePort"
+        --set "controller.service.nodePorts.http={{ k8s_ingress_http_nodeport }}"
+      environment:
+        KUBECONFIG: "{{ local_kubeconfig }}"
+      changed_when: false
 
     - name: Wait for ingress-nginx controller to be available
       ansible.builtin.command: >
-        kubectl -n ingress-nginx wait deployment ingress-nginx-controller
+        kubectl --kubeconfig {{ local_kubeconfig }}
+        -n ingress-nginx wait deployment ingress-nginx-controller
         --for=condition=Available --timeout=300s
       changed_when: false
       register: ingress_ready

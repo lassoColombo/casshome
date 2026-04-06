@@ -42,13 +42,3 @@
     mode: "0600"
     remote_src: true
 
-- name: Allow workloads on the single control-plane node
-  delegate_to: localhost
-  become: false
-  kubernetes.core.k8s_taint:
-    state: absent
-    kubeconfig: "{{ local_kubeconfig }}"
-    name: "{{ inventory_hostname }}"
-    taints:
-      - key: node-role.kubernetes.io/control-plane
-        effect: NoSchedule

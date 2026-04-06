@@ -26,7 +26,3 @@
     job: "{{ duckdns_dir }}/duck.sh >/dev/null 2>&1"
     user: root
     state: present
-
-- name: Run DuckDNS update immediately
-  ansible.builtin.command: "{{ duckdns_dir }}/duck.sh"
-  changed_when: false

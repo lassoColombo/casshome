@@ -20,6 +20,18 @@
   ansible.builtin.import_tasks: copy_kubeconfig_up.yml
   tags: [fetch_kubeconfig]
 
+- name: Allow workloads on the single control-plane node
+  delegate_to: localhost
+  become: false
+  kubernetes.core.k8s_taint:
+    state: absent
+    kubeconfig: "{{ local_kubeconfig }}"
+    name: "{{ inventory_hostname }}"
+    taints:
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+  tags: [kubeadm]
+
 - name: Install Helm
   ansible.builtin.import_tasks: helm_up.yml
   tags: [helm]
