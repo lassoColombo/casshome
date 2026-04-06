@@ -1,4 +1,20 @@
 ---
+- name: Ensure default route is configured via Netplan
+  ansible.builtin.copy:
+    dest: /etc/netplan/99-ansible-gateway.yaml
+    content: |
+      network:
+        version: 2
+        ethernets:
+          eth0:
+            routes:
+              - to: default
+                via: {{ lan_gateway }}
+    mode: "0600"
+    owner: root
+    group: root
+  notify: Apply netplan
+
 - name: Update apt cache and upgrade packages
   ansible.builtin.apt:
     update_cache: true

@@ -48,6 +48,7 @@
 - name: Apps - Media Stack Layer
   hosts: media
   become: true
+  tags: [media]
   module_defaults:
     kubernetes.core.k8s:
       kubeconfig: "{{ local_kubeconfig }}"
@@ -62,8 +63,6 @@
           metadata:
             labels:
               stack-role: media
-      tags: [k8s_labels]
     - name: Deploy Media Stack
       ansible.builtin.import_role:
         name: media_stack
-      tags: [media_stack, apps]

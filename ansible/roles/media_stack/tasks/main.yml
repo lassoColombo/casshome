@@ -1,7 +1,5 @@
 - name: System prerequisites
   ansible.builtin.import_tasks: host_up.yml
-  tags: [media_prereqs]
 
 - name: Deploy on k8s
   ansible.builtin.import_tasks: k8s_up.yml
-  tags: [media_k8s_deploy]
