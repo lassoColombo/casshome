@@ -1,0 +1,18 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: pve-exporter
+  namespace: observability
+  labels:
+    app: pve-exporter
+spec:
+  selector:
+    matchLabels:
+      app: pve-exporter
+  endpoints:
+    - port: http
+      path: /pve
+      params:
+        target: ["{{ hostvars['pve1'].ansible_host }}"]
+      interval: 30s
+      scrapeTimeout: 15s

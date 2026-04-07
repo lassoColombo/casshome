@@ -1,0 +1,266 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vm-disk-dashboard
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  vm-disk.json: |
+    {% raw %}
+    {
+      "__inputs": [],
+      "__requires": [],
+      "annotations": { "list": [] },
+      "editable": true,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "schemaVersion": 38,
+      "style": "dark",
+      "tags": ["disk", "infrastructure"],
+      "time": { "from": "now-1h", "to": "now" },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "VM Disk",
+      "uid": "vm-disk-auto",
+      "version": 1,
+      "templating": {
+        "list": [
+          {
+            "name": "datasource",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0,
+            "includeAll": false,
+            "label": "Datasource",
+            "refresh": 1
+          },
+          {
+            "name": "instance",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+            "query": "label_values(node_filesystem_size_bytes, instance)",
+            "current": {},
+            "hide": 0,
+            "includeAll": false,
+            "multi": false,
+            "label": "Instance",
+            "refresh": 2,
+            "sort": 1
+          },
+          {
+            "name": "mountpoint",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+            "query": "label_values(node_filesystem_size_bytes{instance=\"$instance\", fstype!~\"tmpfs|overlay|squashfs\"}, mountpoint)",
+            "current": {},
+            "hide": 0,
+            "includeAll": true,
+            "multi": true,
+            "label": "Mountpoint",
+            "refresh": 2,
+            "sort": 1
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "row",
+          "title": "Filesystem Space",
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+        },
+        {
+          "id": 2,
+          "type": "gauge",
+          "title": "Used %",
+          "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+          "gridPos": { "h": 8, "w": 8, "x": 0, "y": 1 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.7 },
+                  { "color": "red", "value": 0.85 }
+                ]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "orientation": "auto",
+            "showThresholdLabels": false,
+            "showThresholdMarkers": true
+          },
+          "targets": [
+            {
+              "expr": "1 - (node_filesystem_avail_bytes{instance=\"$instance\", mountpoint=~\"$mountpoint\", fstype!~\"tmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{instance=\"$instance\", mountpoint=~\"$mountpoint\", fstype!~\"tmpfs|overlay|squashfs\"})",
+              "legendFormat": "{{mountpoint}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "bargauge",
+          "title": "Free Space",
+          "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+          "gridPos": { "h": 8, "w": 8, "x": 8, "y": 1 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              }
+            }
+          },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "showUnfilled": true
+          },
+          "targets": [
+            {
+              "expr": "node_filesystem_avail_bytes{instance=\"$instance\", mountpoint=~\"$mountpoint\", fstype!~\"tmpfs|overlay|squashfs\"}",
+              "legendFormat": "{{mountpoint}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Used vs Total",
+          "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+          "gridPos": { "h": 8, "w": 8, "x": 16, "y": 1 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "bytes",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            }
+          },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "expr": "node_filesystem_size_bytes{instance=\"$instance\", mountpoint=~\"$mountpoint\", fstype!~\"tmpfs|overlay|squashfs\"} - node_filesystem_avail_bytes{instance=\"$instance\", mountpoint=~\"$mountpoint\", fstype!~\"tmpfs|overlay|squashfs\"}",
+              "legendFormat": "used - {{mountpoint}}",
+              "refId": "A"
+            },
+            {
+              "expr": "node_filesystem_size_bytes{instance=\"$instance\", mountpoint=~\"$mountpoint\", fstype!~\"tmpfs|overlay|squashfs\"}",
+              "legendFormat": "total - {{mountpoint}}",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "row",
+          "title": "Disk I/O",
+          "collapsed": false,
+          "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Read Throughput",
+          "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            }
+          },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "expr": "rate(node_disk_read_bytes_total{instance=\"$instance\", device!~\"loop.*|sr.*\"}[$__rate_interval])",
+              "legendFormat": "{{device}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Write Throughput",
+          "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "Bps",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            }
+          },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "expr": "rate(node_disk_written_bytes_total{instance=\"$instance\", device!~\"loop.*|sr.*\"}[$__rate_interval])",
+              "legendFormat": "{{device}}",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "IOPS",
+          "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "iops",
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            }
+          },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "expr": "rate(node_disk_reads_completed_total{instance=\"$instance\", device!~\"loop.*|sr.*\"}[$__rate_interval])",
+              "legendFormat": "read - {{device}}",
+              "refId": "A"
+            },
+            {
+              "expr": "rate(node_disk_writes_completed_total{instance=\"$instance\", device!~\"loop.*|sr.*\"}[$__rate_interval])",
+              "legendFormat": "write - {{device}}",
+              "refId": "B"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "type": "timeseries",
+          "title": "Disk Utilization",
+          "datasource": { "type": "prometheus", "uid": "VictoriaMetrics" },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "min": 0,
+              "max": 1,
+              "custom": { "lineWidth": 1, "fillOpacity": 10 }
+            }
+          },
+          "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+          "targets": [
+            {
+              "expr": "rate(node_disk_io_time_seconds_total{instance=\"$instance\", device!~\"loop.*|sr.*\"}[$__rate_interval])",
+              "legendFormat": "{{device}}",
+              "refId": "A"
+            }
+          ]
+        }
+      ]
+    }
+    {% endraw %}

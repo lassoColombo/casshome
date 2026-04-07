@@ -1,0 +1,13 @@
+---
+- name: Create VictoriaMetrics data directory
+  ansible.builtin.file:
+    path: /opt/victoriametrics/data
+    state: directory
+    mode: "0755"
+    owner: "1000"
+
+- name: Create Grafana data directory
+  ansible.builtin.file:
+    path: /opt/grafana/data
+    state: directory
+    mode: "0777"

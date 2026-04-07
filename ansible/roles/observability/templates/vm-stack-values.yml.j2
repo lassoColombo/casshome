@@ -1,0 +1,34 @@
+prometheus:
+  enabled: false
+
+vmsingle:
+  enabled: true
+  spec:
+    retentionPeriod: "30d"
+    storage:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: ""
+      volumeName: vmsingle-storage-pv
+
+vmagent:
+  enabled: true
+
+grafana:
+  enabled: true
+  persistence:
+    enabled: true
+    existingClaim: "grafana-storage-pvc"
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - ""
+    path: /grafana
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
+      serve_from_sub_path: true

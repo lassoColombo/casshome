@@ -66,3 +66,15 @@
     - name: Deploy Media Stack
       ansible.builtin.import_role:
         name: media_stack
+
+- name: Core - Observability Layer
+  hosts: k8s
+  become: true
+  tags: [observability, monitoring]
+  module_defaults:
+    kubernetes.core.k8s:
+      kubeconfig: "{{ local_kubeconfig }}"
+  tasks:
+    - name: Deploy Observability Stack
+      ansible.builtin.import_role:
+        name: observability

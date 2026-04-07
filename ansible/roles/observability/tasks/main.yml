@@ -1,0 +1,8 @@
+---
+- name: System prerequisites
+  ansible.builtin.import_tasks: host_up.yml
+  tags: [obs_host]
+
+- name: Deploy on k8s
+  ansible.builtin.import_tasks: k8s_up.yml
+  tags: [obs_k8s]

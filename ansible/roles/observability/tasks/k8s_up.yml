@@ -1,0 +1,91 @@
+---
+- name: Deploy Observability Stack
+  delegate_to: localhost
+  become: false
+  module_defaults:
+    kubernetes.core.k8s:
+      kubeconfig: "{{ local_kubeconfig }}"
+  block:
+    - name: Infrastructure - Common Dependencies
+      tags: [obs_infra]
+      block:
+        - name: Observability Namespace
+          kubernetes.core.k8s:
+            template: namespace.yml
+            state: present
+        - name: Observability Shared Storage
+          kubernetes.core.k8s:
+            template: storage.yml
+            state: present
+
+    - name: Stack - VictoriaMetrics (Grafana + K8s Monitoring)
+      tags: [victoria_metrics]
+      block:
+        - name: Add VictoriaMetrics Helm repo
+          ansible.builtin.command: helm repo add vm https://victoriametrics.github.io/helm-charts
+          changed_when: false
+
+        - name: Update Helm repos
+          ansible.builtin.command: helm repo update
+          changed_when: false
+
+        - name: Template values file for VictoriaMetrics Stack
+          ansible.builtin.template:
+            src: vm-stack-values.yml.j2
+            dest: /tmp/vm-stack-values.yml
+            mode: "0600"
+
+        - name: Install VictoriaMetrics K8s Stack via Helm
+          ansible.builtin.command: >
+            helm upgrade --install vm-stack vm/victoria-metrics-k8s-stack
+            --namespace observability
+            --values /tmp/vm-stack-values.yml
+            --version 0.25.1
+          environment:
+            KUBECONFIG: "{{ local_kubeconfig }}"
+          changed_when: false
+
+    - name: App - Proxmox Exporter
+      tags: [pve_exporter]
+      block:
+        - name: PVE Exporter Secret
+          kubernetes.core.k8s:
+            template: pve-exporter/secret.yml.j2
+            state: present
+        - name: PVE Exporter Config
+          kubernetes.core.k8s:
+            template: pve-exporter/config.yml
+            state: present
+        - name: PVE Exporter Deployment
+          kubernetes.core.k8s:
+            template: pve-exporter/deployment.yml.j2
+            state: present
+            wait: true
+            wait_condition:
+              type: Available
+              status: "True"
+            wait_timeout: 120
+        - name: PVE Exporter Service
+          kubernetes.core.k8s:
+            template: pve-exporter/service.yml
+            state: present
+        - name: PVE Exporter VMServiceScrape
+          kubernetes.core.k8s:
+            template: pve-exporter/vmservicescrape.yml.j2
+            state: present
+        - name: PVE Grafana Dashboard
+          kubernetes.core.k8s:
+            template: pve-exporter/dashboard.yml
+            state: present
+
+    - name: Dashboards - Custom Grafana Dashboards
+      tags: [grafana_dashboards]
+      block:
+        - name: Media Stack Grafana Dashboard
+          kubernetes.core.k8s:
+            template: dashboards/media-stack-dashboard.yml
+            state: present
+        - name: VM Disk Grafana Dashboard
+          kubernetes.core.k8s:
+            template: dashboards/vm-disk-dashboard.yml
+            state: present
