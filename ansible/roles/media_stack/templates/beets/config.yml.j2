@@ -12,25 +12,23 @@ data:
       move: false
       copy: false
       write: true
-      resume: ask
-      quiet: false
+      resume: false
+      quiet: true
       quiet_fallback: asis
       timid: false
+      incremental: true
       log: /music/.beets/beets.log
 
-    plugins: fetchart embedart scrub mbsync web info
+    plugins: fetchart embedart scrub mbsync lyrics
 
     art_filename: cover
     fetchart:
       auto: true
     embedart:
       auto: true
+    lyrics:
+      auto: true
+      sources:
+        - lrclib
+        - genius
 
-    paths:
-      default: $albumartist/$album%aunique{}/$track $title
-      singleton: Non-Album/$artist/$title
-      comp: Compilations/$album%aunique{}/$track $title
-
-    web:
-      host: 0.0.0.0
-      port: 8337

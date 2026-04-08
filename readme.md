@@ -41,10 +41,10 @@ Proxmox (192.168.1.10, HP Z440)
 
 | Service | URL |
 |---|---|
-| qBittorrent | `http://10.13.13.1:32080` |
-| Prowlarr | `http://10.13.13.1:32696` |
-| Lidarr | `http://10.13.13.1:32686` |
-| Jellyfin | `http://10.13.13.1:32018/jellyfin` |
+| qBittorrent | `http://10.13.13.1:32080/media/qbittorrent` |
+| Prowlarr | `http://10.13.13.1:32696/media/prowlarr` |
+| Lidarr | `http://10.13.13.1:32686/media/lidarr` |
+| Jellyfin | `http://10.13.13.1:32018/media/jellyfin` |
 | Grafana | `http://10.13.13.1:32018/grafana` |
 | Proxmox UI | `https://192.168.1.10:8006` |
 

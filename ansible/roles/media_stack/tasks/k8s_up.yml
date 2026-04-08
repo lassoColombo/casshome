@@ -124,23 +124,9 @@
           kubernetes.core.k8s:
             template: beets/config.yml.j2
             state: present
-        - name: Beets deployment
+        - name: Beets cronjob
           kubernetes.core.k8s:
-            template: beets/deployment.yml.j2
-            state: present
-            wait: true
-            wait_condition:
-              type: Available
-              status: "True"
-            wait_timeout: 300
-        - name: Beets service
-          kubernetes.core.k8s:
-            template: beets/service.yml
-            state: present
-            force: true
-        - name: Beets ingress
-          kubernetes.core.k8s:
-            template: beets/ingress.yml
+            template: beets/cronjob.yml.j2
             state: present
 
     # ── jellyfin ────────────────────────────────────────────────────────────────
