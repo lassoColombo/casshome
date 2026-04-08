@@ -19,7 +19,7 @@ spec:
     spec:
       initContainers:
         - name: init-config
-          image: busybox:latest
+          image: busybox:{{ media_stack_busybox_version }}
           command:
             - sh
             - -c
@@ -33,7 +33,7 @@ spec:
               readOnly: true
       containers:
         - name: prowlarr
-          image: lscr.io/linuxserver/prowlarr:latest
+          image: lscr.io/linuxserver/prowlarr:{{ media_stack_prowlarr_version }}
           ports:
             - containerPort: 9696
               name: http

@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:latest
+          image: lscr.io/linuxserver/qbittorrent:{{ media_stack_qbittorrent_version }}
           ports:
             - containerPort: 8080
               name: webui

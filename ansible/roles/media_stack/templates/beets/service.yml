@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beets
+  namespace: media
+  labels:
+    app: beets
+spec:
+  selector:
+    app: beets
+  ports:
+    - name: http
+      port: 8337
+      targetPort: 8337
+  type: ClusterIP

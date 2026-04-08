@@ -1,49 +1,73 @@
 ---
-- name: Deploy Calico locally
+- name: Deploy Flannel locally
   delegate_to: localhost
   become: false
-  module_defaults:
-    kubernetes.core.k8s:
-      kubeconfig: "{{ local_kubeconfig }}"
   block:
-    - name: Add Calico (Tigera) Helm repo
-      ansible.builtin.command: helm repo add projectcalico https://docs.tigera.io/calico/charts
-      changed_when: false
+    - name: Download Flannel manifest
+      ansible.builtin.get_url:
+        url: "https://github.com/flannel-io/flannel/releases/download/{{ k8s_flannel_version }}/kube-flannel.yml"
+        dest: /tmp/kube-flannel.yml
+        mode: "0644"
+        force: true
 
-    - name: Update Helm repos
-      ansible.builtin.command: helm repo update
-      changed_when: false
+    - name: Apply Flannel manifest
+      kubernetes.core.k8s:
+        kubeconfig: "{{ local_kubeconfig }}"
+        state: present
+        src: /tmp/kube-flannel.yml
 
-    - name: Install Calico via Tigera operator Helm chart
-      ansible.builtin.command: >
-        helm upgrade --install calico projectcalico/tigera-operator
-        --namespace tigera-operator
-        --create-namespace
-        --version {{ k8s_calico_chart_version }}
-        --set "installation.calicoNetwork.ipPools[0].cidr={{ k8s_pod_cidr }}"
-        --set "installation.calicoNetwork.ipPools[0].encapsulation=IPIP"
-      environment:
-        KUBECONFIG: "{{ local_kubeconfig }}"
-      changed_when: false
+    - name: Configure Flannel host-gw backend
+      kubernetes.core.k8s:
+        kubeconfig: "{{ local_kubeconfig }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: kube-flannel-cfg
+            namespace: kube-flannel
+          data:
+            net-conf.json: |
+              {
+                "Network": "{{ k8s_pod_cidr }}",
+                "EnableNFTables": false,
+                "Backend": {
+                  "Type": "host-gw"
+                }
+              }
 
-    - name: Wait for Calico node to be ready
-      changed_when: false
-      register: calico_ready
-      retries: 10
-      delay: 15
-      until: calico_ready.rc == 0
+    - name: Restart Flannel DaemonSet to apply backend config
+      kubernetes.core.k8s:
+        kubeconfig: "{{ local_kubeconfig }}"
+        state: patched
+        kind: DaemonSet
+        namespace: kube-flannel
+        name: kube-flannel-ds
+        definition:
+          spec:
+            template:
+              metadata:
+                annotations:
+                  kubectl.kubernetes.io/restartedAt: "{{ ansible_facts['date_time']['iso8601'] }}"
+
+    - name: Wait for Flannel DaemonSet to be ready
       ansible.builtin.command: >
         kubectl --kubeconfig {{ local_kubeconfig }}
-        -n calico-system wait daemonset/calico-node
+        -n kube-flannel wait daemonset/kube-flannel-ds
         --for=jsonpath='{.status.numberReady}'=1 --timeout=300s
+      changed_when: false
+      register: flannel_ready
+      retries: 10
+      delay: 15
+      until: flannel_ready.rc == 0
 
     - name: Wait for node to be Ready
+      ansible.builtin.command: >
+        kubectl --kubeconfig {{ local_kubeconfig }}
+        wait node --all
+        --for=condition=Ready --timeout=300s
       changed_when: false
       register: node_ready
       retries: 5
       delay: 15
       until: node_ready.rc == 0
-      ansible.builtin.command: >
-        kubectl --kubeconfig {{ local_kubeconfig }}
-        wait node --all
-        --for=condition=Ready --timeout=300s

@@ -35,12 +35,24 @@
             dest: /tmp/vm-stack-values.yml
             mode: "0600"
 
+        - name: Install VictoriaMetrics Operator (CRDs) via Helm
+          ansible.builtin.command: >
+            helm upgrade --install vm-operator vm/victoria-metrics-operator
+            --namespace observability
+            --set operator.disable_prometheus_converter=true
+            --wait --timeout 120s
+          environment:
+            KUBECONFIG: "{{ local_kubeconfig }}"
+          changed_when: false
+
         - name: Install VictoriaMetrics K8s Stack via Helm
           ansible.builtin.command: >
             helm upgrade --install vm-stack vm/victoria-metrics-k8s-stack
             --namespace observability
             --values /tmp/vm-stack-values.yml
             --version 0.25.1
+            --set victoria-metrics-operator.enabled=false
+            --wait --timeout 300s
           environment:
             KUBECONFIG: "{{ local_kubeconfig }}"
           changed_when: false

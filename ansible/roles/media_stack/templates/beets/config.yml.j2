@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beets-config
+  namespace: media
+data:
+  config.yaml: |
+    directory: /music
+    library: /music/.beets/library.blb
+
+    import:
+      move: false
+      copy: false
+      write: true
+      resume: ask
+      quiet: false
+      quiet_fallback: asis
+      timid: false
+      log: /music/.beets/beets.log
+
+    plugins: fetchart embedart scrub mbsync web info
+
+    art_filename: cover
+    fetchart:
+      auto: true
+    embedart:
+      auto: true
+
+    paths:
+      default: $albumartist/$album%aunique{}/$track $title
+      singleton: Non-Album/$artist/$title
+      comp: Compilations/$album%aunique{}/$track $title
+
+    web:
+      host: 0.0.0.0
+      port: 8337

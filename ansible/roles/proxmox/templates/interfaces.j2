@@ -1,0 +1,16 @@
+auto lo
+iface lo inet loopback
+
+iface nic0 inet manual
+    post-up ethtool -K nic0 tso off gso off gro off
+
+auto vmbr0
+iface vmbr0 inet manual
+    post-up ethtool -K vmbr0 tso off gso off gro off
+    address {{ ansible_host }}/24
+    gateway {{ lan_gateway }}
+    bridge-ports nic0
+    bridge-stp off
+    bridge-fd 0
+
+source /etc/network/interfaces.d/*

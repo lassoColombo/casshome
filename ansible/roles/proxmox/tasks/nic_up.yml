@@ -1,0 +1,25 @@
+---
+# The Intel I218-LM (e1000e driver) requires TSO/GSO/GRO disabled and interrupt
+# throttling off to handle WireGuard UDP traffic without hardware TX buffer hangs.
+- name: Drop e1000e modprobe config
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/e1000e.conf
+    content: |
+      options e1000e InterruptThrottleRate=0
+    mode: "0644"
+
+- name: Configure network interfaces
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Apply TSO/GSO/GRO disabling immediately
+  ansible.builtin.command:
+    cmd: "ethtool -K {{ item }} tso off gso off gro off"
+  loop:
+    - nic0
+    - vmbr0
+  changed_when: true

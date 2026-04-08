@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lidarr
+  name: beets
   namespace: media
   labels:
-    app: lidarr
+    app: beets
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: lidarr
+      app: beets
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: lidarr
+        app: beets
     spec:
       initContainers:
         - name: init-config
@@ -24,18 +24,22 @@ spec:
             - sh
             - -c
             - |
-              cp /tmp/lidarr-config/config.xml /config/config.xml
+              mkdir -p /music/.beets
+              chown -R 1000:1000 /music/.beets
+              cp /tmp/beets-config/config.yaml /config/config.yaml
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: lidarr-config
-              mountPath: /tmp/lidarr-config
+            - name: music
+              mountPath: /music
+            - name: beets-config
+              mountPath: /tmp/beets-config
               readOnly: true
       containers:
-        - name: lidarr
-          image: lscr.io/linuxserver/lidarr:{{ media_stack_lidarr_version }}
+        - name: beets
+          image: lscr.io/linuxserver/beets:{{ media_stack_beets_version }}
           ports:
-            - containerPort: 8686
+            - containerPort: 8337
               name: http
           env:
             - name: PUID
@@ -46,40 +50,34 @@ spec:
               value: "{{ timezone }}"
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: 50m
+              memory: 64Mi
             limits:
-              cpu: "1"
-              memory: 512Mi
+              cpu: 500m
+              memory: 256Mi
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: downloads
-              mountPath: /downloads
             - name: music
               mountPath: /music
           livenessProbe:
             httpGet:
               path: /
-              port: 8686
+              port: 8337
             initialDelaySeconds: 30
             periodSeconds: 30
           readinessProbe:
             httpGet:
               path: /
-              port: 8686
+              port: 8337
             initialDelaySeconds: 15
             periodSeconds: 10
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: lidarr-config-pvc
-        - name: lidarr-config
+          emptyDir: {}
+        - name: beets-config
           configMap:
-            name: lidarr-config
-        - name: downloads
-          persistentVolumeClaim:
-            claimName: media-downloads-pvc
+            name: beets-config
         - name: music
           persistentVolumeClaim:
             claimName: media-music-pvc
