@@ -1,7 +1,14 @@
 ---
+media_stack_downloads_size: "200Gi"
+media_stack_music_size: "500Gi"
+media_stack_nextcloud_data_size: "100Gi"
+media_stack_nextcloud_db_size: "10Gi"
+
 media_stack_busybox_version: "1.37.0"
 media_stack_qbittorrent_version: "5.1.0"
 media_stack_prowlarr_version: "2.3.0.5236-ls138"
 media_stack_lidarr_version: "nightly-3.1.2.4939-ls192"
 media_stack_jellyfin_version: "10.11.8"
 media_stack_beets_version: "2.8.0-ls322"
+media_stack_nextcloud_version: "30"
+media_stack_postgres_version: "16"

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud-db
+  namespace: media
+  labels:
+    app: nextcloud-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud-db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nextcloud-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:{{ media_stack_postgres_version }}
+          env:
+            - name: POSTGRES_DB
+              value: nextcloud
+            - name: POSTGRES_USER
+              value: nextcloud
+            - name: POSTGRES_PASSWORD
+              value: "{{ lookup('env', 'NEXTCLOUD_DB_PASSWORD') | mandatory }}"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nextcloud-db-pvc

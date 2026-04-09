@@ -3,3 +3,4 @@ k8s_ingress_http_nodeport: 32018
 wireguard_ip: "10.13.13.1"
 local_kubeconfig: "{{ lookup('env', 'HOME') | mandatory }}/.kube/casshome.conf"
 lan_gateway: "192.168.1.1"
+duckdns_domain: "kaloscasshome"

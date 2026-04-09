@@ -35,11 +35,3 @@
       kubernetes.core.k8s:
         template: service.yml
         state: present
-
-- name: Rewrite kubeconfig server to WireGuard IP
-  delegate_to: localhost
-  become: false
-  ansible.builtin.copy:
-    content: "{{ lookup('file', local_kubeconfig) | replace('https://' + ansible_host + ':6443', 'https://' + wireguard_ip + ':6443') }}"
-    dest: "{{ local_kubeconfig }}"
-    mode: "0600"

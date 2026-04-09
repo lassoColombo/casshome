@@ -16,7 +16,7 @@
             state: present
         - name: Media stack shared storage
           kubernetes.core.k8s:
-            template: storage.yml
+            template: storage.yml.j2
             state: present
           tags: [media_infra, storage]
 
@@ -32,15 +32,6 @@
           kubernetes.core.k8s:
             template: qbittorrent/config.yml
             state: present
-        - name: QBittorrent deployment
-          kubernetes.core.k8s:
-            template: qbittorrent/deployment.yml.j2
-            state: present
-            wait: true
-            wait_condition:
-              type: Available
-              status: "True"
-            wait_timeout: 120
         - name: QBittorrent service
           kubernetes.core.k8s:
             template: qbittorrent/service.yml
@@ -50,6 +41,15 @@
           kubernetes.core.k8s:
             template: qbittorrent/ingress.yml
             state: present
+        - name: QBittorrent deployment
+          kubernetes.core.k8s:
+            template: qbittorrent/deployment.yml.j2
+            state: present
+            wait: true
+            wait_condition:
+              type: Available
+              status: "True"
+            wait_timeout: 120
 
     # ── Prowlarr ───────────────────────────────────────────────────────────────
 
@@ -64,15 +64,6 @@
           kubernetes.core.k8s:
             template: prowlarr/config.yml.j2
             state: present
-        - name: Prowlarr deployment
-          kubernetes.core.k8s:
-            template: prowlarr/deployment.yml.j2
-            state: present
-            wait: true
-            wait_condition:
-              type: Available
-              status: "True"
-            wait_timeout: 120
         - name: Prowlarr service
           kubernetes.core.k8s:
             template: prowlarr/service.yml
@@ -82,6 +73,15 @@
           kubernetes.core.k8s:
             template: prowlarr/ingress.yml
             state: present
+        - name: Prowlarr deployment
+          kubernetes.core.k8s:
+            template: prowlarr/deployment.yml.j2
+            state: present
+            wait: true
+            wait_condition:
+              type: Available
+              status: "True"
+            wait_timeout: 120
 
     # ── Lidarr ───────────────────────────────────────────────────────────────
 
@@ -96,15 +96,6 @@
           kubernetes.core.k8s:
             template: lidarr/config.yml.j2
             state: present
-        - name: Lidarr deployment
-          kubernetes.core.k8s:
-            template: lidarr/deployment.yml.j2
-            state: present
-            wait: true
-            wait_condition:
-              type: Available
-              status: "True"
-            wait_timeout: 120
         - name: Lidarr service
           kubernetes.core.k8s:
             template: lidarr/service.yml
@@ -114,6 +105,60 @@
           kubernetes.core.k8s:
             template: lidarr/ingress.yml
             state: present
+        - name: Lidarr deployment
+          kubernetes.core.k8s:
+            template: lidarr/deployment.yml.j2
+            state: present
+            wait: true
+            wait_condition:
+              type: Available
+              status: "True"
+            wait_timeout: 120
+
+    # ── Nextcloud ────────────────────────────────────────────────────────────
+
+    - name: App - Nextcloud
+      tags: [nextcloud]
+      block:
+        - name: Nextcloud DB storage (PVs and PVCs)
+          kubernetes.core.k8s:
+            template: nextcloud/db-storage.yml.j2
+            state: present
+        - name: Nextcloud DB service
+          kubernetes.core.k8s:
+            template: nextcloud/db-service.yml
+            state: present
+        - name: Nextcloud DB deployment
+          kubernetes.core.k8s:
+            template: nextcloud/db-deployment.yml.j2
+            state: present
+            wait: true
+            wait_condition:
+              type: Available
+              status: "True"
+            wait_timeout: 120
+        - name: Nextcloud storage (PVs and PVCs)
+          kubernetes.core.k8s:
+            template: nextcloud/storage.yml.j2
+            state: present
+        - name: Nextcloud service
+          kubernetes.core.k8s:
+            template: nextcloud/service.yml
+            state: present
+            force: true
+        - name: Nextcloud ingress
+          kubernetes.core.k8s:
+            template: nextcloud/ingress.yml
+            state: present
+        - name: Nextcloud deployment
+          kubernetes.core.k8s:
+            template: nextcloud/deployment.yml.j2
+            state: present
+            wait: true
+            wait_condition:
+              type: Available
+              status: "True"
+            wait_timeout: 300
 
     # ── Beets ───────────────────────────────────────────────────────────────
 
@@ -142,6 +187,14 @@
           kubernetes.core.k8s:
             template: jellyfin/config.yml
             state: present
+        - name: Jellyfin service
+          kubernetes.core.k8s:
+            template: jellyfin/service.yml
+            state: present
+        - name: Jellyfin ingress
+          kubernetes.core.k8s:
+            template: jellyfin/ingress.yml
+            state: present
         - name: Jellyfin deployment
           kubernetes.core.k8s:
             template: jellyfin/deployment.yml.j2
@@ -151,11 +204,3 @@
               type: Available
               status: "True"
             wait_timeout: 120
-        - name: Jellyfin service
-          kubernetes.core.k8s:
-            template: jellyfin/service.yml
-            state: present
-        - name: Jellyfin ingress
-          kubernetes.core.k8s:
-            template: jellyfin/ingress.yml
-            state: present

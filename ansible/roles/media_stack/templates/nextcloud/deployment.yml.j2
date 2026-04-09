@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+  namespace: media
+  labels:
+    app: nextcloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextcloud
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      containers:
+        - name: nextcloud
+          image: nextcloud:{{ media_stack_nextcloud_version }}
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: NEXTCLOUD_ADMIN_USER
+              value: "{{ lookup('env', 'NEXTCLOUD_ADMIN_USER') | mandatory }}"
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              value: "{{ lookup('env', 'NEXTCLOUD_ADMIN_PASSWORD') | mandatory }}"
+            - name: NEXTCLOUD_DATA_DIR
+              value: /var/www/html/data
+            - name: OVERWRITEWEBROOT
+              value: /media/nextcloud
+            - name: OVERWRITEPROTOCOL
+              value: http
+            - name: TRUSTED_PROXIES
+              value: "10.244.0.0/16"
+            - name: NEXTCLOUD_TRUSTED_DOMAINS
+              value: "localhost {{ wireguard_ip }} {{ ansible_host }} {{ duckdns_domain }}.duckdns.org"
+            - name: POSTGRES_HOST
+              value: "nextcloud-db"
+            - name: POSTGRES_DB
+              value: "nextcloud"
+            - name: POSTGRES_USER
+              value: "nextcloud"
+            - name: POSTGRES_PASSWORD
+              value: "{{ lookup('env', 'NEXTCLOUD_DB_PASSWORD') | mandatory }}"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html
+          # readinessProbe:
+          #   httpGet:
+          #     path: /status.php
+          #     port: 80
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 10
+          #   failureThreshold: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nextcloud-data-pvc

@@ -12,6 +12,7 @@ apiServer:
   certSANs:
     - "localhost"
     - "{{ wireguard_ip }}"
+    - "{{ ansible_host }}"
 networking:
   podSubnet: "{{ k8s_pod_cidr }}"
   serviceSubnet: "{{ k8s_service_cidr }}"

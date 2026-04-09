@@ -41,7 +41,7 @@ resource "proxmox_virtual_environment_vm" "k8s_node" {
     file_id      = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
     file_format  = "raw"
     interface    = "virtio0"
-    size         = 100
+    size         = 800
     discard      = "on"
     iothread     = true
   }

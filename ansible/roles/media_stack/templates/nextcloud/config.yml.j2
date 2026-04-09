@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextcloud-config
+  namespace: media
+data:
+  custom.config.php: |
+    <?php
+    $CONFIG = [
+      'overwritewebroot'  => '/media/nextcloud',
+      'overwriteprotocol' => 'http',
+      'trusted_proxies'   => ['10.244.0.0/16'],
+      'trusted_domains'   => [
+        'localhost',
+        '{{ wireguard_ip }}',
+        '{{ ansible_host }}',
+        '{{ duckdns_domain }}.duckdns.org',
+      ],
+    ];

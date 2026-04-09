@@ -10,7 +10,7 @@ metadata:
   name: media-downloads-pv
 spec:
   capacity:
-    storage: 200Gi
+    storage: {{ media_stack_downloads_size }}
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
@@ -29,7 +29,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 200Gi
+      storage: {{ media_stack_downloads_size }}
   storageClassName: ""
   volumeName: media-downloads-pv
 ---
@@ -40,7 +40,7 @@ metadata:
   name: media-music-pv
 spec:
   capacity:
-    storage: 500Gi
+    storage: {{ media_stack_music_size }}
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
@@ -59,6 +59,6 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Gi
+      storage: {{ media_stack_music_size }}
   storageClassName: ""
   volumeName: media-music-pv

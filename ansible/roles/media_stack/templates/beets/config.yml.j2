@@ -11,15 +11,15 @@ data:
     import:
       move: false
       copy: false
-      write: true
-      resume: false
+      write: false
+      resume: yes
       quiet: true
       quiet_fallback: asis
       timid: false
       incremental: true
       log: /music/.beets/beets.log
 
-    plugins: fetchart embedart scrub mbsync lyrics
+    plugins: fetchart embedart lyrics
 
     art_filename: cover
     fetchart:
