@@ -26,11 +26,16 @@ spec:
             - |
               mkdir -p /config/config
               cp /tmp/network-config/network.xml /config/config/network.xml
+              mkdir -p /config/root/default/Music
+              cp /tmp/library-config/options.xml /config/root/default/Music/options.xml
           volumeMounts:
             - name: config
               mountPath: /config
             - name: network-config
               mountPath: /tmp/network-config
+              readOnly: true
+            - name: library-config
+              mountPath: /tmp/library-config
               readOnly: true
       containers:
         - name: jellyfin
@@ -76,3 +81,6 @@ spec:
         - name: network-config
           configMap:
             name: jellyfin-network-config
+        - name: library-config
+          configMap:
+            name: jellyfin-library-config

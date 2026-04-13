@@ -11,24 +11,36 @@ data:
     import:
       move: false
       copy: false
-      write: false
+      write: true
       resume: yes
       quiet: true
       quiet_fallback: asis
       timid: false
       incremental: true
+      group_albums: yes
       log: /music/.beets/beets.log
 
-    plugins: fetchart embedart lyrics
+    plugins: chroma fetchart embedart lyrics lastgenre replaygain
+
+    acoustid:
+      apikey: {{ lookup('env', 'ACOUSTID_APIKEY') | mandatory }}
 
     art_filename: cover
     fetchart:
       auto: true
+      sources: filesystem itunes albumart coverart
     embedart:
       auto: true
+      maxwidth: 500
     lyrics:
       auto: true
       sources:
         - lrclib
-        - genius
+    lastgenre:
+      auto: yes
+      source: album
+      apikey: {{ lookup('env', 'LASTFM_API_KEY') | mandatory }}
+    replaygain:
+      backend: ffmpeg
+      overwrite: no
 

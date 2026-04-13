@@ -12,6 +12,8 @@ data:
     [BitTorrent]
     Session\AddTorrentStopped=false
     Session\DefaultSavePath=/downloads/
+    Session\MaxActiveDownloads=10
+    Session\MaxActiveTorrents=15
     Session\Port=6881
     Session\QueueingSystemEnabled=true
     Session\SSL\Port=12296
@@ -38,6 +40,8 @@ data:
     Downloads\SavePath=/downloads/
     Downloads\TempPath=/downloads/incomplete/
     WebUI\Address=*
+    WebUI\AuthSubnetWhitelist=10.244.0.0/16, 10.13.13.0/24
+    WebUI\AuthSubnetWhitelistEnabled=true
     WebUI\CSRFProtectionEnabled=false
     WebUI\HostHeaderValidation=false
     WebUI\MaxAuthFails=0

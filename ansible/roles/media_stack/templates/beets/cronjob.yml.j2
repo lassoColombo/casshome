@@ -8,8 +8,8 @@ metadata:
 spec:
   schedule: "0 6 * * *"
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 7
   jobTemplate:
     spec:
       template:
@@ -17,7 +17,7 @@ spec:
           labels:
             app: beets
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never
           initContainers:
             - name: init-config
               image: busybox:{{ media_stack_busybox_version }}
@@ -26,7 +26,7 @@ spec:
                 - -c
                 - |
                   mkdir -p /music/.beets
-                  chown -R 1000:1000 /music/.beets
+                  chown -R 1000:1000 /music
                   cp /tmp/beets-config/config.yaml /config/config.yaml
               volumeMounts:
                 - name: config
@@ -55,8 +55,8 @@ spec:
                   cpu: 100m
                   memory: 128Mi
                 limits:
-                  cpu: 500m
-                  memory: 512Mi
+                  cpu: 1000m
+                  memory: 1024Mi
               volumeMounts:
                 - name: config
                   mountPath: /config
