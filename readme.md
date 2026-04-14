@@ -13,7 +13,8 @@ Proxmox (192.168.1.10, HP Z440)
                      WireGuard    Media Stack        Observability
                      (VPN entry)  (qBit · Prowlarr   (VictoriaMetrics
                      DuckDNS      · Lidarr · Beets    · Grafana
-                                  · Jellyfin)         · PVE exporter)
+                                  · Jellyfin          · PVE exporter)
+                                  · youtube-dl)
 ```
 
 **All external access goes through WireGuard.** There is no direct internet exposure — the only open port is UDP 51820 for the VPN.

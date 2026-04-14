@@ -104,29 +104,61 @@ or delete by name, then re-run `--tags observability`.
 
 ## Media Stack Workflow & Manual Operations
 
-The media stack relies on an **"In-Place Groomer"** workflow. Ansible deploys the infrastructure and constraints, but the following manual steps are required to configure the applications' internal databases correctly.
+### Automated pipeline (Lidarr-sourced music)
 
-### 1. Lidarr: Folder Structure & Renaming
-Ansible cannot configure Lidarr's internal database (`lidarr.db`). You must explicitly configure Lidarr to use subfolders so Beets can accurately parse albums without flattening the directory.
-1. Open Lidarr UI (`http://192.168.1.20:32018/media/lidarr`).
-2. Go to **Settings > Media Management** (Check "Show Advanced" at the top).
-3. Check **Rename Tracks**.
-4. Set **Standard Album Folder Format** to `{Album Title} ({Release Year})` (or your preferred subfolder format).
-5. Save changes.
-6. Go to **Artists** > **Mass Update** > Select all artists > Click **Rename Files** to trigger a reorganization of your `/music` directory.
+```
+Prowlarr (indexers) ──► Lidarr ──► qBittorrent ──► /mnt/downloads
+                                                          │
+                                              Lidarr moves & renames
+                                                          │
+                                                  /mnt/media/music
+                                                          │
+                                              beets-import CronJob (6am)
+                                           in-place: AcoustID + MusicBrainz
+                                           enriches tags, embeds cover art
+                                           move: false — Lidarr paths untouched
+```
 
-### 2. Beets: In-Place Metadata Enrichment
-Beets acts as a strict metadata enricher. It runs against the `/music` directory in-place. Ansible provisions it to never move or copy files (`move: false`, `copy: false`) to avoid unlinking Lidarr's database. It is also configured to `quiet_fallback: asis` so it automatically accepts its own ID3 tags if MusicBrainz fails to find a match, preventing terminal hangs.
-* **To trigger a bulk import:**
-  ```bash
-  kubectl exec -it -n media deploy/beets -- beet import -q /music/
-  ```
+### Manual YouTube Music import
 
-### 3. Jellyfin: Library Refresh
-Jellyfin monitors the `/media` mount passively. After Lidarr performs a mass structural rename, or after Beets updates ID3 tags and cover art, you must trigger a manual scan.
-1. Open Jellyfin UI (`http://192.168.1.20:32018/media/jellyfin`).
-2. Go to **Dashboard > Libraries**.
-3. Click the `...` next to your Music library and select **Scan Library** to pull in the new directory paths and enriched metadata.
+A `youtube-dl` deployment (image: linuxserver/beets + yt-dlp) provides a single `download` command that downloads a track or album from YouTube Music and immediately imports it into the library:
+
+```bash
+# Single track — strip any &list= or &si= parameters if you only want one track
+kubectl exec -it -n media deploy/youtube-dl -- download --single "https://music.youtube.com/watch?v=..."
+
+# Full album / playlist
+kubectl exec -it -n media deploy/youtube-dl -- download --album "https://music.youtube.com/playlist?list=..."
+```
+
+**What happens internally:**
+1. `yt-dlp` downloads audio as 320k MP3, embeds YouTube Music metadata (artist, album, title, cover art) and organises files under `/downloads/Artist/Album/Title.mp3`
+2. `beet import -q /downloads` matches via AcoustID, falls back to `asis` if no match, then **moves** files to `/mnt/media/music` — path format `Artist/Album/Title.mp3` (no track number, since YouTube playlist positions are meaningless as track numbers)
+
+**Config split:**
+
+| ConfigMap | Used by | `move` | Source dir |
+|---|---|---|---|
+| `beets-config` | `beets-import` CronJob (6am) | false | `/music` (in-place) |
+| `beets-download-config` | `youtube-dl` deployment | true | `/downloads` → `/music` |
+
+**Notes:**
+- The `youtube-dl` pod restarts nightly (emptyDir for `/config`), so beets incremental state resets each time. Files already in the library are detected as duplicates and skipped — leftover files in `/downloads` can be cleaned manually.
+- If yt-dlp warns about a missing JS runtime (deno), audio still downloads correctly via the Android API fallback.
+
+### Lidarr: first-time folder setup
+
+Ansible cannot configure Lidarr's internal database. After first deploy:
+1. Open Lidarr UI → **Settings > Media Management** → enable **Show Advanced**
+2. Check **Rename Tracks**
+3. Set **Standard Album Folder Format** to `{Album Title}` (or preferred format)
+4. Save → **Artists > Mass Update** → select all → **Rename Files**
+
+### Jellyfin: library refresh
+
+After Lidarr renames or beets enriches tags, trigger a manual scan:
+1. Jellyfin UI → **Dashboard > Libraries**
+2. Click `...` next to the Music library → **Scan Library**
 
 ## k8s role task order
 
@@ -159,6 +191,7 @@ kubectl_config_up.yml   bash completion + alias on node
 --tags prowlarr
 --tags lidarr
 --tags beets
+--tags youtube-dl    youtube-dl deployment + beets-download-config
 --tags media_infra   Namespace + shared PVs only
 ```
 

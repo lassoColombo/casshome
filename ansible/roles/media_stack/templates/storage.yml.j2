@@ -62,3 +62,33 @@ spec:
       storage: {{ media_stack_music_size }}
   storageClassName: ""
   volumeName: media-music-pv
+---
+# youtube-dl staging area: manual downloads land here before beets moves them to /music
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: youtube-dl-staging-pv
+spec:
+  capacity:
+    storage: {{ media_stack_youtube_dl_staging_size }}
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /mnt/youtube-dl
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: youtube-dl-staging-pvc
+  namespace: media
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ media_stack_youtube_dl_staging_size }}
+  storageClassName: ""
+  volumeName: youtube-dl-staging-pv

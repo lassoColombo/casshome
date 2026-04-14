@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: download-script
+  namespace: media
+data:
+  download.sh: |
+    #!/bin/bash
+    set -e
+
+    usage() {
+      echo "Usage: download [--single <url>]... [--album <url>]..."
+      echo "  --single  download one track (flags can repeat)"
+      echo "  --album   download full playlist/album (flags can repeat)"
+      exit 1
+    }
+
+    SINGLES=()
+    ALBUMS=()
+    HAVE_ARGS=false
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --single) shift; SINGLES+=("$1"); shift; HAVE_ARGS=true ;;
+        --album)  shift; ALBUMS+=("$1");  shift; HAVE_ARGS=true ;;
+        *)        echo "Unknown argument: $1"; usage ;;
+      esac
+    done
+
+    [[ "$HAVE_ARGS" == "false" ]] && usage
+
+    YTDLP_OPTS=(
+      -x --audio-format mp3 --audio-quality 320k
+      --embed-metadata --embed-thumbnail
+      -o "/downloads/%(artist|Unknown Artist)s/%(album|Unknown Album)s/%(title)s.%(ext)s"
+    )
+
+    for URL in "${SINGLES[@]}"; do
+      echo "==> Downloading single: $URL"
+      yt-dlp --no-playlist "${YTDLP_OPTS[@]}" "$URL"
+    done
+
+    for URL in "${ALBUMS[@]}"; do
+      echo "==> Downloading album: $URL"
+      yt-dlp --yes-playlist "${YTDLP_OPTS[@]}" "$URL"
+    done
+
+    echo "==> Importing to library..."
+    beet -c /config/config.yaml import -q /downloads
+    echo "==> Cleaning staging..."
+    find /downloads -mindepth 1 -delete
+    echo "==> Done."

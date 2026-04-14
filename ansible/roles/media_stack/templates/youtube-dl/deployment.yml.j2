@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: youtube-dl
+  namespace: media
+  labels:
+    app: youtube-dl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: youtube-dl
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: youtube-dl
+    spec:
+      initContainers:
+        - name: init-setup
+          image: lscr.io/linuxserver/beets:{{ media_stack_beets_version }}
+          command:
+            - sh
+            - -c
+            - |
+              pip3 install --quiet --prefix /tools yt-dlp
+              mkdir -p /music/.beets
+              chown -R 1000:1000 /music /downloads
+              cp /tmp/beets-config/config.yaml /config/config.yaml
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+            - name: config
+              mountPath: /config
+            - name: beets-config
+              mountPath: /tmp/beets-config
+              readOnly: true
+            - name: music
+              mountPath: /music
+            - name: staging
+              mountPath: /downloads
+      containers:
+        - name: youtube-dl
+          image: lscr.io/linuxserver/beets:{{ media_stack_beets_version }}
+          command: ["sleep", "infinity"]
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "{{ timezone }}"
+            - name: PATH
+              value: "/tools/bin:/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+            - name: PYTHONPATH
+              value: "/tools/lib/python3.12/site-packages"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 2000m
+              memory: 2048Mi
+          volumeMounts:
+            - name: tools
+              mountPath: /tools
+            - name: config
+              mountPath: /config
+            - name: staging
+              mountPath: /downloads
+            - name: music
+              mountPath: /music
+            - name: download-script
+              mountPath: /usr/local/bin/download
+              subPath: download.sh
+      volumes:
+        - name: tools
+          emptyDir: {}
+        - name: config
+          emptyDir: {}
+        - name: beets-config
+          configMap:
+            name: beets-download-config
+        - name: staging
+          persistentVolumeClaim:
+            claimName: youtube-dl-staging-pvc
+        - name: music
+          persistentVolumeClaim:
+            claimName: media-music-pvc
+        - name: download-script
+          configMap:
+            name: download-script
+            defaultMode: 0755

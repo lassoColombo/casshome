@@ -3,3 +3,6 @@
 
 - name: Deploy on k8s
   ansible.builtin.import_tasks: k8s_up.yml
+
+- name: Configure Arr
+  ansible.builtin.import_tasks: configure_arr.yml

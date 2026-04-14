@@ -1,0 +1,167 @@
+# ── Configure Prowlarr ───────────────────────────────────
+
+- name: Configure Prowlarr
+  tags: [lidarr]
+  block:
+    - name: Get Prowlarr applications
+      uri:
+        url: "http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/media/prowlarr/api/v1/applications"
+        headers:
+          X-Api-Key: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}"
+      register: prowlarr_apps
+
+    - name: Set Lidarr app fact
+      set_fact:
+        _lidarr_app: "{{ prowlarr_apps.json | selectattr('name', 'equalto', 'Lidarr') | list | first | default({}) }}"
+
+    - name: Create And Configure Lidarr in Prowlarr
+      when: _lidarr_app.id is not defined
+      uri:
+        url: "http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/media/prowlarr/api/v1/applications"
+        method: POST
+        headers:
+          X-Api-Key: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}"
+        body_format: json
+        body:
+          name: Lidarr
+          syncLevel: addOnly
+          implementationName: Lidarr
+          implementation: Lidarr
+          configContract: LidarrSettings
+          tags: []
+          fields:
+            - { name: prowlarrUrl, value: "http://prowlarr:9696" }
+            - { name: baseUrl, value: "http://lidarr:8686/media/lidarr" }
+            - {
+                name: apiKey,
+                value: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}",
+              }
+            - {
+                name: syncCategories,
+                value: [3000, 3010, 3030, 3040, 3050, 3060],
+              }
+            - {
+                name: syncRejectBlocklistedTorrentHashesWhileGrabbing,
+                value: false,
+              }
+        status_code: 201
+
+- name: Configure Lidarr
+  tags: [lidarr]
+  block:
+    # ── Naming Configuration ───────────────────────────────────────────────
+
+    - name: Get Lidarr naming config
+      uri:
+        url: "http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/media/lidarr/api/v1/config/naming"
+        headers:
+          X-Api-Key: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}"
+      register: lidarr_naming
+
+    - name: Update Lidarr naming config
+      uri:
+        url: "http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/media/lidarr/api/v1/config/naming"
+        method: PUT
+        headers:
+          X-Api-Key: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}"
+        body_format: json
+        body: >-
+          {{
+            lidarr_naming.json
+            | combine({
+                "renameTracks": true,
+                "standardTrackFormat": "{Album Title}/{track:00} - {Track Title}",
+                "multiDiscTrackFormat": "{Album Title}/{Medium:0}-{track:00} - {Track Title}"
+              })
+          }}
+        status_code: 202
+      when: >
+        lidarr_naming.json.standardTrackFormat != "{Album Title}/{track:00} - {Track Title}" or
+        lidarr_naming.json.multiDiscTrackFormat != "{Album Title}/{Medium:0}-{track:00} - {Track Title}" or
+        lidarr_naming.json.renameTracks != true
+
+    # ── qBittorrent Download Client ────────────────────────────────────────
+
+    - name: Read qBittorrent password from env
+      set_fact:
+        qbittorrent_password: "{{ lookup('env', 'QBITTORRENT_PASSWORD') | default('', true) }}"
+
+    - name: Get Lidarr download clients
+      when: qbittorrent_password | length > 0
+      uri:
+        url: "http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/media/lidarr/api/v1/downloadclient"
+        headers:
+          X-Api-Key: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}"
+      register: lidarr_clients
+
+    - name: Extract qBittorrent client
+      when: qbittorrent_password | length > 0
+      set_fact:
+        _qb: "{{ lidarr_clients.json | selectattr('name', 'equalto', 'qBittorrent') | list | first | default({}) }}"
+
+    - name: Create qBittorrent client
+      when:
+        - qbittorrent_password | length > 0
+        - _qb.id is not defined
+      uri:
+        url: "http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/media/lidarr/api/v1/downloadclient"
+        method: POST
+        headers:
+          X-Api-Key: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}"
+        body_format: json
+        body:
+          enable: true
+          protocol: "torrent"
+          priority: 1
+          removeCompletedDownloads: true
+          removeFailedDownloads: true
+          name: "qBittorrent"
+          implementation: "QBittorrent"
+          implementationName: "qBittorrent"
+          configContract: "QBittorrentSettings"
+          fields:
+            - { name: host, value: "qbittorrent" }
+            - { name: port, value: 8080 }
+            - { name: username, value: "admin" }
+            - { name: password, value: "{{ qbittorrent_password }}" }
+            - { name: category, value: "lidarr" }
+            - { name: useSsl, value: false }
+            - { name: urlBase, value: "" }
+            - { name: recentTvPriority, value: 0 }
+            - { name: olderTvPriority, value: 0 }
+            - { name: initialState, value: 0 }
+            - { name: sequentialOrder, value: false }
+            - { name: firstAndLast, value: false }
+            - { name: contentLayout, value: 0 }
+        status_code: 201
+
+    - name: Update qBittorrent client if needed
+      when:
+        - qbittorrent_password | length > 0
+        - _qb.id is defined
+      uri:
+        url: "http://{{ ansible_host }}:{{ k8s_ingress_http_nodeport }}/media/lidarr/api/v1/downloadclient/{{ _qb.id }}"
+        method: PUT
+        headers:
+          X-Api-Key: "{{ lookup('env', 'ARR_API_KEY') | mandatory }}"
+        body_format: json
+        body: >-
+          {{
+            _qb
+            | combine({
+                "enable": true,
+                "priority": 1,
+                "removeCompletedDownloads": true,
+                "removeFailedDownloads": true,
+                "fields": [
+                  { "name": "host", "value": "qbittorrent" },
+                  { "name": "port", "value": 8080 },
+                  { "name": "username", "value": "admin" },
+                  { "name": "password", "value": qbittorrent_password },
+                  { "name": "category", "value": "lidarr" },
+                  { "name": "useSsl", "value": false },
+                  { "name": "urlBase", "value": "" }
+                ]
+              })
+          }}
+        status_code: 202

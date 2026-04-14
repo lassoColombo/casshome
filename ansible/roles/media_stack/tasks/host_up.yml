@@ -11,3 +11,10 @@
     state: directory
     mode: "0755"
     owner: "{{ ansible_user }}"
+
+- name: Create youtube-dl staging directory
+  ansible.builtin.file:
+    path: /mnt/youtube-dl
+    state: directory
+    mode: "0755"
+    owner: "{{ ansible_user }}"
