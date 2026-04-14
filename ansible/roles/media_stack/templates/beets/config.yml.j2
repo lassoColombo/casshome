@@ -20,7 +20,14 @@ data:
       group_albums: yes
       log: /music/.beets/beets.log
 
-    plugins: chroma fetchart embedart lyrics lastgenre replaygain
+    match:
+      strong_rec_thresh: 0.20
+      max_rec:
+        missing_tracks: strong
+        unmatched_tracks: strong
+      va_cutoff: 1.0
+
+    plugins: chroma fetchart embedart lyrics lastgenre replaygain mbsync musicbrainz
 
     acoustid:
       apikey: {{ lookup('env', 'ACOUSTID_APIKEY') | mandatory }}

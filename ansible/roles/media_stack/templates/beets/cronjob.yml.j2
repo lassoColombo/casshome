@@ -42,7 +42,7 @@ spec:
               command:
                 - /bin/bash
                 - -c
-                - beet import -q /music
+                - beet import -q /music && beet mbsync
               env:
                 - name: PUID
                   value: "1000"

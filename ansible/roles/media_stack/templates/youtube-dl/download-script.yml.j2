@@ -28,24 +28,36 @@ data:
 
     [[ "$HAVE_ARGS" == "false" ]] && usage
 
-    YTDLP_OPTS=(
+    YTDLP_SINGLE_OPTS=(
       -x --audio-format mp3 --audio-quality 320k
       --embed-metadata --embed-thumbnail
       -o "/downloads/%(artist|Unknown Artist)s/%(album|Unknown Album)s/%(title)s.%(ext)s"
     )
 
+    # Albums: all tracks land in one directory keyed by album name.
+    # --parse-metadata sets album_artist (TPE2) from the first artist in the comma-separated
+    # list so beets groups all 16 tracks by (albumartist, album) rather than (artist, album).
+    YTDLP_ALBUM_OPTS=(
+      -x --audio-format mp3 --audio-quality 320k
+      --embed-metadata --embed-thumbnail
+      --parse-metadata "artist:^(?P<album_artist>[^,]+)"
+      -o "/downloads/%(album|Unknown Album)s/%(title)s.%(ext)s"
+    )
+
     for URL in "${SINGLES[@]}"; do
       echo "==> Downloading single: $URL"
-      yt-dlp --no-playlist "${YTDLP_OPTS[@]}" "$URL"
+      yt-dlp --no-playlist "${YTDLP_SINGLE_OPTS[@]}" "$URL"
     done
 
     for URL in "${ALBUMS[@]}"; do
       echo "==> Downloading album: $URL"
-      yt-dlp --yes-playlist "${YTDLP_OPTS[@]}" "$URL"
+      yt-dlp --yes-playlist "${YTDLP_ALBUM_OPTS[@]}" "$URL"
     done
 
     echo "==> Importing to library..."
     beet -c /config/config.yaml import -q /downloads
+    echo "==> Syncing matched albums with MusicBrainz..."
+    beet -c /config/config.yaml mbsync
     echo "==> Cleaning staging..."
     find /downloads -mindepth 1 -delete
     echo "==> Done."
