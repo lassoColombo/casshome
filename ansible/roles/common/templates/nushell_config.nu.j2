@@ -1,0 +1,84 @@
+# {{ ansible_managed }}
+
+source $"($nu.cache-dir)/carapace.nu"
+
+let carapace_completer = {|spans|
+  carapace $spans.0 nushell ...$spans
+  | from json
+  | if ($in | default [] | where value =~ '^-.*ERR$' | is-empty) { $in } else { null }
+}
+
+let completer = {|spans|
+  let expanded_alias = scope aliases
+    | where name == $spans.0
+    | get -o 0.expansion
+
+  let spans = if $expanded_alias != null {
+    $spans
+    | skip 1
+    | prepend ($expanded_alias | split row ' ' | take 1)
+  } else {
+    $spans
+  }
+
+  do $carapace_completer $spans
+}
+
+$env.config = {
+  show_banner: false
+
+  table: {
+    mode: rounded
+    index_mode: auto
+    show_empty: true
+    padding: { left: 1, right: 1 }
+    trim: {
+      methodology: wrapping
+      wrapping_try_keep_words: true
+      truncating_suffix: "..."
+    }
+  }
+
+  history: {
+    max_size: 10_000
+    sync_on_enter: true
+    file_format: "plaintext"
+    isolation: false
+  }
+
+  completions: {
+    case_sensitive: false
+    quick: true
+    partial: true
+    algorithm: "fuzzy"
+    sort: "smart"
+    external: {
+      enable: true
+      max_results: 100
+      completer: $completer
+    }
+  }
+
+  cursor_shape: {
+    vi_insert: underscore
+    vi_normal: block
+  }
+
+  edit_mode: vi
+
+  error_style: "fancy"
+
+  hooks: {
+    pre_prompt: [{ null }]
+    pre_execution: [{ null }]
+    env_change: {
+      PWD: [{|before, after| null }]
+    }
+    display_output: "table"
+    command_not_found: { null }
+  }
+}
+
+alias l  = ls --all
+alias ll = ls --all --long
+alias k  = kubectl

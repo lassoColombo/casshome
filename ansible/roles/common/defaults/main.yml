@@ -1,0 +1,6 @@
+---
+# Nushell binary version — verify latest at https://github.com/nushell/nushell/releases
+nushell_version: "0.111.0"
+nushell_user: "ubuntu"
+nushell_install_dir: "/usr/local/bin"
+nushell_config_dir: "/home/{{ nushell_user }}/.config/nushell"

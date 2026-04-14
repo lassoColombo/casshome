@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+
+$env.ENV_CONVERSIONS = {
+  "PATH": {
+    from_string: { |s| $s | split row (char esep) | path expand --no-symlink }
+    to_string:   { |v| $v | path expand --no-symlink | str join (char esep) }
+  }
+}
+
+$env.PATH = ($env.PATH | split row (char esep) | uniq)
+
+$env.NU_LIB_DIRS    = [($nu.default-config-dir | path join 'scripts')]
+$env.NU_PLUGIN_DIRS = [($nu.default-config-dir | path join 'plugins')]
+
+# Generate carapace completions for nushell
+mkdir $"($nu.cache-dir)"
+carapace _carapace nushell | save --force $"($nu.cache-dir)/carapace.nu"
