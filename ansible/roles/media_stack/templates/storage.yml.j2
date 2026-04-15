@@ -4,6 +4,7 @@
 # All three apps share the `media-downloads` volume.
 ---
 # Shared: qBittorrent writes here, Lidarr reads and imports from here
+# Host path: /mnt/downloads/torrents  (container mount point: /downloads)
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -16,7 +17,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   hostPath:
-    path: /mnt/downloads
+    path: /mnt/downloads/torrents
     type: DirectoryOrCreate
 ---
 apiVersion: v1
@@ -64,6 +65,7 @@ spec:
   volumeName: media-music-pv
 ---
 # youtube-dl staging area: manual downloads land here before beets moves them to /music
+# Host path: /mnt/downloads/youtube  (container mount point: /downloads)
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -76,7 +78,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   hostPath:
-    path: /mnt/youtube-dl
+    path: /mnt/downloads/youtube
     type: DirectoryOrCreate
 ---
 apiVersion: v1

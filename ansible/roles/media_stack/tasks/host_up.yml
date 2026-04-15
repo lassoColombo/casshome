@@ -1,6 +1,6 @@
-- name: Create downloads directory
+- name: Create torrents download directory
   ansible.builtin.file:
-    path: /mnt/downloads
+    path: /mnt/downloads/torrents
     state: directory
     mode: "0755"
     owner: "{{ ansible_user }}"
@@ -14,7 +14,7 @@
 
 - name: Create youtube-dl staging directory
   ansible.builtin.file:
-    path: /mnt/youtube-dl
+    path: /mnt/downloads/youtube
     state: directory
     mode: "0755"
     owner: "{{ ansible_user }}"

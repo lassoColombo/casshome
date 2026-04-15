@@ -8,6 +8,11 @@ data:
     directory: /music
     library: /music/.beets/library.blb
 
+    paths:
+      default: $albumartist/$album/$title
+      singleton: Non-Album/$artist/$title
+      comp: Compilations/$album/$title
+
     import:
       move: false
       copy: false
@@ -25,7 +30,7 @@ data:
       max_rec:
         missing_tracks: strong
         unmatched_tracks: strong
-      va_cutoff: 1.0
+      va_cutoff: 0.5
 
     plugins: chroma fetchart embedart lyrics lastgenre replaygain mbsync musicbrainz
 

@@ -74,6 +74,51 @@ data:
       fi
     done
 
+    # Detect VA compilations: if multiple unique album_artists share the same album name
+    # in the staging dir, normalize all album_artist tags to "Various Artists".
+    if [[ ${#ALBUMS[@]} -gt 0 ]]; then
+      STAGING="$STAGING" python3 << 'PYEOF'
+    import os, sys
+    try:
+        from mutagen.id3 import ID3, TPE2, TCMP
+    except ImportError:
+        sys.exit(0)
+
+    staging = os.environ.get("STAGING", "")
+    if not staging:
+        sys.exit(0)
+
+    album_to_artists = {}
+    album_to_files = {}
+    for root, dirs, files in os.walk(staging):
+        for f in files:
+            if not f.endswith(".mp3"):
+                continue
+            path = os.path.join(root, f)
+            try:
+                tags = ID3(path)
+                album = str(tags.get("TALB", [""])[0])
+                aa = str(tags.get("TPE2", [""])[0])
+                if album:
+                    album_to_artists.setdefault(album, set()).add(aa)
+                    album_to_files.setdefault(album, []).append(path)
+            except Exception:
+                pass
+
+    for album, artists in album_to_artists.items():
+        if len(artists) > 1:
+            print(f"[va-detect] Compilation: {album!r} ({len(artists)} artists) -> Various Artists")
+            for path in album_to_files[album]:
+                try:
+                    tags = ID3(path)
+                    tags["TPE2"] = TPE2(encoding=3, text="Various Artists")
+                    tags["TCMP"] = TCMP(encoding=3, text="1")
+                    tags.save()
+                except Exception as e:
+                    print(f"[va-detect] WARN {path}: {e}")
+    PYEOF
+    fi
+
     if [[ -z "$(find "$STAGING" -name '*.mp3' -print -quit 2>/dev/null)" ]]; then
       echo "==> No files downloaded — skipping import."
       [[ ${#FAILED[@]} -gt 0 ]] && printf "    Failed: %s\n" "${FAILED[@]}"
