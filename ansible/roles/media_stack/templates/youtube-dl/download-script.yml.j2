@@ -1,3 +1,4 @@
+{% raw %}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,7 +7,6 @@ metadata:
 data:
   download.sh: |
     #!/bin/bash
-    set -e
 
     usage() {
       echo "Usage: download [--single <url>]... [--album <url>]..."
@@ -28,36 +28,72 @@ data:
 
     [[ "$HAVE_ARGS" == "false" ]] && usage
 
-    YTDLP_SINGLE_OPTS=(
+    # Per-run staging dir: keeps this run's files isolated from any leftover
+    # files in /downloads and prevents beet from importing unrelated content.
+    STAGING="/downloads/staging-$$"
+    mkdir -p "$STAGING"
+    trap 'echo "==> Cleaning staging: $STAGING"; rm -rf "$STAGING"' EXIT
+
+    YTDLP_COMMON=(
       -x --audio-format mp3 --audio-quality 320k
       --embed-metadata --embed-thumbnail
-      -o "/downloads/%(artist|Unknown Artist)s/%(album|Unknown Album)s/%(title)s.%(ext)s"
+      --retries 5 --fragment-retries 5
+      --concurrent-fragments 5
+      --sleep-interval 1 --max-sleep-interval 4
+    )
+
+    YTDLP_SINGLE_OPTS=(
+      "${YTDLP_COMMON[@]}"
+      -o "$STAGING/%(artist|Unknown Artist)s/%(album|Unknown Album)s/%(title)s.%(ext)s"
     )
 
     # Albums: all tracks land in one directory keyed by album name.
     # --parse-metadata sets album_artist (TPE2) from the first artist in the comma-separated
-    # list so beets groups all 16 tracks by (albumartist, album) rather than (artist, album).
+    # list so beets groups all tracks by (albumartist, album) rather than (artist, album).
     YTDLP_ALBUM_OPTS=(
-      -x --audio-format mp3 --audio-quality 320k
-      --embed-metadata --embed-thumbnail
+      "${YTDLP_COMMON[@]}"
       --parse-metadata "artist:^(?P<album_artist>[^,]+)"
-      -o "/downloads/%(album|Unknown Album)s/%(title)s.%(ext)s"
+      -o "$STAGING/%(album|Unknown Album)s/%(title)s.%(ext)s"
     )
+
+    FAILED=()
 
     for URL in "${SINGLES[@]}"; do
       echo "==> Downloading single: $URL"
-      yt-dlp --no-playlist "${YTDLP_SINGLE_OPTS[@]}" "$URL"
+      if ! yt-dlp --no-playlist "${YTDLP_SINGLE_OPTS[@]}" "$URL"; then
+        echo "    [WARN] Failed: $URL"
+        FAILED+=("$URL")
+      fi
     done
 
     for URL in "${ALBUMS[@]}"; do
       echo "==> Downloading album: $URL"
-      yt-dlp --yes-playlist "${YTDLP_ALBUM_OPTS[@]}" "$URL"
+      if ! yt-dlp --yes-playlist "${YTDLP_ALBUM_OPTS[@]}" "$URL"; then
+        echo "    [WARN] Failed: $URL"
+        FAILED+=("$URL")
+      fi
     done
 
+    if [[ -z "$(find "$STAGING" -name '*.mp3' -print -quit 2>/dev/null)" ]]; then
+      echo "==> No files downloaded — skipping import."
+      [[ ${#FAILED[@]} -gt 0 ]] && printf "    Failed: %s\n" "${FAILED[@]}"
+      exit 1
+    fi
+
     echo "==> Importing to library..."
-    beet -c /config/config.yaml import -q /downloads
-    echo "==> Syncing matched albums with MusicBrainz..."
-    beet -c /config/config.yaml mbsync
-    echo "==> Cleaning staging..."
-    find /downloads -mindepth 1 -delete
+    beet -c /config/config.yaml import -q --set newimport=1 "$STAGING"
+
+    echo "==> Syncing new imports with MusicBrainz..."
+    beet -c /config/config.yaml mbsync newimport:1
+
+    echo "==> Clearing import tag..."
+    beet -c /config/config.yaml modify -y newimport:1 newimport=!
+
+    if [[ ${#FAILED[@]} -gt 0 ]]; then
+      echo "==> Done with errors. Failed URLs:"
+      printf "    - %s\n" "${FAILED[@]}"
+      exit 1
+    fi
+
     echo "==> Done."
+{% endraw %}
